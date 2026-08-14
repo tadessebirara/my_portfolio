@@ -21,9 +21,9 @@ export const projects: Project[] = [
     slug: "alyah-attendance-management-system",
     title: "Alyah Attendance Management System",
     shortDescription:
-      "A web-based attendance management platform designed to streamline student attendance recording, monitoring, reporting, and administrative management.",
+      "A web-based attendance management platform designed to streamline Employee attendance recording, monitoring, reporting, and administrative management.",
     overview:
-      "Alyah is a comprehensive attendance management system built for schools and educational institutions. It provides a centralized platform for recording, tracking, and reporting student attendance with role-based access controls for administrators, teachers, and parents.",
+      "Alyah is a comprehensive attendance management system built for private and educational institutions. It provides a centralized platform for recording, tracking, and reporting employee and student attendance with role-based access controls for administrators, teachers, and parents.",
     role: "Full-Stack Engineer",
     technologies: [
       "Next.js",

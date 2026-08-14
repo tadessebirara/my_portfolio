@@ -1,34 +1,84 @@
 @import "tailwindcss";
 
+/* ============================================================
+   DESIGN TOKENS — dark navy theme matching reference design
+   ============================================================ */
 :root {
-  color-scheme: light;
-  --font-sans:
-    "Segoe UI", Inter, ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, sans-serif;
-  --font-mono:
-    "SFMono-Regular", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    monospace;
-  --background: #eff3ff;
-  --foreground: #0f172a;
-  --muted: #64748b;
-  --surface: #ffffff;
-  --surface-alt: #f8fafc;
-  --border: #dbeafe;
-  --shadow: 0 20px 70px -40px rgba(15, 23, 42, 0.22);
+  color-scheme: dark;
+
+  /* Base backgrounds */
+  --bg-base:       #020617;   /* deepest background */
+  --bg-navy:       #0b1120;   /* section surfaces */
+  --bg-card:       #0f172a;   /* card backgrounds */
+  --bg-card-hover: #111827;   /* card hover state */
+  --bg-glass:      rgba(15, 23, 42, 0.6);   /* glassmorphism */
+
+  /* Text */
+  --text-primary:   #f1f5f9;  /* headings, primary text */
+  --text-secondary: #94a3b8;  /* body, subtitles */
+  --text-muted:     #475569;  /* placeholder, disabled */
+
+  /* Accent palette */
+  --accent-blue:   #2563eb;
+  --accent-cyan:   #06b6d4;
+  --accent-indigo: #4f46e5;
+  --accent-purple: #7c3aed;
+
+  /* Borders */
+  --border-subtle:  rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-accent:  rgba(37, 99, 235, 0.40);
+
+  /* Gradients */
+  --gradient-brand:   linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%);
+  --gradient-brand-h: linear-gradient(135deg, #1d4ed8 0%, #4338ca 50%, #6d28d9 100%);
+  --gradient-text:    linear-gradient(135deg, #60a5fa 0%, #818cf8 50%, #a78bfa 100%);
+  --gradient-glow:    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(37,99,235,0.18) 0%, transparent 70%);
+
+  /* Shadows / glows */
+  --shadow-card:    0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-glow-sm: 0 0 20px rgba(37, 99, 235, 0.15);
+  --shadow-glow-md: 0 0 40px rgba(37, 99, 235, 0.20);
+  --shadow-glow-lg: 0 0 80px rgba(37, 99, 235, 0.18);
+
+  /* Radius */
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  20px;
+  --radius-2xl: 24px;
+
+  /* Font */
+  --font-sans: "Inter", "Segoe UI", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+
+  /* Legacy compat vars used by existing components */
+  --background:  var(--bg-base);
+  --foreground:  var(--text-primary);
+  --muted:       var(--text-secondary);
+  --surface:     var(--bg-card);
+  --surface-alt: var(--bg-navy);
+  --border:      var(--border-default);
+  --shadow:      var(--shadow-card);
+}
+
+/* ============================================================
+   BASE RESET & GLOBAL
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html {
   scroll-behavior: smooth;
+  /* -webkit-text-size-adjust: 100%; */
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -38,92 +88,472 @@ html {
 
 body {
   min-height: 100vh;
-  margin: 0;
-  background: var(--background);
-  color: var(--foreground);
+  background-color: var(--bg-base);
+  color: var(--text-primary);
   font-family: var(--font-sans);
+  line-height: 1.6;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
-.dark .text-slate-300 {
-  color: #e2e8f0 !important;
-}
-
-.dark .text-slate-400 {
-  color: #cbd5e1 !important;
-}
-
-.dark .bg-slate-900 {
-  background-color: #111827 !important;
-}
-
-.dark .bg-slate-900\/80 {
-  background-color: rgba(17, 24, 39, 0.8) !important;
-}
-
-.dark .bg-slate-950 {
-  background-color: #050b16 !important;
-}
-
-.dark .bg-slate-950\/80 {
-  background-color: rgba(5, 11, 22, 0.8) !important;
-}
-
-.dark .border-slate-800 {
-  border-color: #334155 !important;
-}
-
-.dark .border-slate-700 {
-  border-color: #475569 !important;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-::selection {
-  background: rgba(14, 165, 233, 0.25);
-  color: var(--foreground);
-}
-
-button,
-input,
-textarea,
-a {
-  font: inherit;
-}
-
-img,
-svg {
-  display: block;
-}
-
-.dark {
-  color-scheme: dark;
-  --background: #050b16;
-  --foreground: #e2e8f0;
-  --muted: #94a3b8;
-  --surface: #111827;
-  --surface-alt: #0f172a;
-  --border: #334155;
-  --shadow: 0 20px 70px -40px rgba(0, 0, 0, 0.65);
-}
-
+/* Full-page atmospheric background — stronger glows for clarity */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background:
-    radial-gradient(
-      circle at top left,
-      rgba(14, 165, 233, 0.08),
-      transparent 35%
-    ),
-    radial-gradient(
-      circle at bottom right,
-      rgba(59, 130, 246, 0.06),
-      transparent 35%
-    );
-  pointer-events: none;
   z-index: -1;
+  pointer-events: none;
+  background:
+    /* top-center blue glow — hero atmosphere */
+    radial-gradient(ellipse 110% 65% at 50% -5%,   rgba(37,  99, 235, 0.22) 0%, transparent 62%),
+    /* upper-right indigo */
+    radial-gradient(ellipse  65%  55% at 90%  8%,  rgba(79,  70, 229, 0.16) 0%, transparent 55%),
+    /* left mid cyan */
+    radial-gradient(ellipse  55%  45% at -5%  45%, rgba( 6, 182, 212, 0.11) 0%, transparent 55%),
+    /* center mid subtle pulse */
+    radial-gradient(ellipse  70%  40% at 50%  55%, rgba(37,  99, 235, 0.06) 0%, transparent 60%),
+    /* bottom-right purple */
+    radial-gradient(ellipse  65%  55% at 100% 95%, rgba(124, 58, 237, 0.14) 0%, transparent 55%),
+    /* solid base */
+    var(--bg-base);
+}
+
+/* ============================================================
+   SELECTION
+   ============================================================ */
+::selection {
+  background: rgba(37, 99, 235, 0.30);
+  color: #fff;
+}
+
+/* ============================================================
+   TYPOGRAPHY HELPERS
+   ============================================================ */
+
+/* Better heading defaults for all screen sizes */
+h1, h2, h3, h4 {
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 639px) {
+  h1 { font-size: clamp(1.75rem, 6vw, 2.25rem); }
+  h2 { font-size: clamp(1.5rem, 5vw, 1.875rem); }
+}
+
+/* Gradient text — used on brand name, section accents */
+.text-gradient {
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Brand gradient (slightly more blue-heavy, matches screenshot) */
+.text-gradient-brand {
+  background: linear-gradient(135deg, #60a5fa 0%, #818cf8 40%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================================
+   GLASS CARD UTILITY
+   ============================================================ */
+.glass {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255,255,255,0.05) inset;
+}
+
+.glass-hover {
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.glass-hover:hover {
+  border-color: var(--border-accent);
+  box-shadow: var(--shadow-glow-sm), 0 16px 48px rgba(0,0,0,0.4);
+  transform: translateY(-4px);
+}
+
+/* ============================================================
+   GRADIENT BUTTON
+   ============================================================ */
+.btn-gradient {
+  background: var(--gradient-brand);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+}
+
+.btn-gradient:hover {
+  background: var(--gradient-brand-h);
+  box-shadow: 0 0 24px rgba(37, 99, 235, 0.40);
+  transform: translateY(-2px);
+}
+
+.btn-outline-accent {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-accent);
+  cursor: pointer;
+  transition: border-color 0.25s ease, background 0.25s ease, transform 0.2s ease;
+}
+
+.btn-outline-accent:hover {
+  background: rgba(37, 99, 235, 0.10);
+  border-color: var(--accent-blue);
+  transform: translateY(-2px);
+}
+
+/* ============================================================
+   SECTION DIVIDERS — subtle line between sections
+   ============================================================ */
+main > section + section {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Alternating section backgrounds for visual separation */
+main > section:nth-child(even) {
+  background: rgba(11, 17, 32, 0.50);
+}
+
+/* ============================================================
+   DOT GRID OVERLAY — subtle texture on sections
+   ============================================================ */
+.dot-grid {
+  background-image: radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ============================================================
+   SECTION HEADING — gradient underline accent
+   ============================================================ */
+.section-title {
+  position: relative;
+  display: inline-block;
+}
+
+.section-title::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -10px;
+  width: 60px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--gradient-brand);
+}
+
+/* ============================================================
+   SECTION LAYOUT
+   ============================================================ */
+.section-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .section-container { padding-inline: 2rem; }
+}
+
+@media (min-width: 1024px) {
+  .section-container { padding-inline: 3rem; }
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(37, 99, 235, 0.30);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(37, 99, 235, 0.55);
+}
+
+/* ============================================================
+   FOCUS VISIBLE
+   ============================================================ */
+:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   LINKS
+   ============================================================ */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ============================================================
+   IMAGES / SVG
+   ============================================================ */
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* ============================================================
+   FORM ELEMENTS
+   ============================================================ */
+button, input, textarea, select {
+  font: inherit;
+}
+
+input, textarea {
+  background: rgba(15, 23, 42, 0.8);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  width: 100%;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-muted);
+}
+
+input:focus, textarea:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* ============================================================
+   SECTION HEADING ACCENT LINE
+   ============================================================ */
+.section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+}
+
+.section-eyebrow::before {
+  content: "";
+  display: block;
+  width: 2rem;
+  height: 2px;
+  background: var(--gradient-brand);
+  border-radius: 1px;
+}
+
+/* ============================================================
+   ANIMATED GLOW RING (hero profile)
+   ============================================================ */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1.0; }
+}
+
+.glow-ring {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* ============================================================
+   FLOATING CARD ANIMATION
+   ============================================================ */
+@keyframes float {
+  0%, 100% { transform: translateY(0px);  }
+  50%       { transform: translateY(-8px); }
+}
+
+.float-card {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* ============================================================
+   STAT COUNTER CARD
+   ============================================================ */
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem 1rem;
+  background: rgba(37, 99, 235, 0.07);
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.08);
+}
+
+@media (min-width: 640px) {
+  .stat-card {
+    padding: 1.75rem 1.25rem;
+  }
+}
+
+.stat-card:hover {
+  border-color: rgba(37, 99, 235, 0.55);
+  box-shadow: 0 0 30px rgba(37, 99, 235, 0.20), 0 8px 32px rgba(0,0,0,0.3);
+  transform: translateY(-4px);
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ============================================================
+   TECH BADGE
+   ============================================================ */
+.tech-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.tech-badge:hover {
+  border-color: rgba(37, 99, 235, 0.45);
+  color: var(--text-primary);
+}
+
+/* ============================================================
+   SKILL ICON CARD
+   ============================================================ */
+.skill-icon-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 0.5rem;
+  background: rgba(15, 23, 42, 0.80);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: default;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+}
+
+@media (min-width: 640px) {
+  .skill-icon-card {
+    padding: 1rem 0.75rem;
+  }
+}
+
+.skill-icon-card:hover {
+  border-color: rgba(37, 99, 235, 0.40);
+  box-shadow: 0 0 16px rgba(37, 99, 235, 0.12);
+  transform: translateY(-3px);
+}
+
+.skill-icon-card span {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* ============================================================
+   PROJECT CARD
+   ============================================================ */
+.project-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-glass);
+  /* backdrop-filter: blur(10px); */
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+}
+
+.project-card:hover {
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 0 40px rgba(37, 99, 235, 0.12);
+  transform: translateY(-4px);
+}
+
+/* ============================================================
+   CONTACT SECTION
+   ============================================================ */
+.contact-banner {
+  background: linear-gradient(135deg,
+    rgba(37, 99, 235, 0.15) 0%,
+    rgba(79, 70, 229, 0.10) 50%,
+    rgba(124, 58, 237, 0.12) 100%
+  );
+  border: 1px solid rgba(37, 99, 235, 0.20);
+  border-radius: var(--radius-2xl);
+}
+
+/* ============================================================
+   NAVBAR
+   ============================================================ */
+.nav-link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-sm);
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.nav-link:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-link.active {
+  color: var(--accent-cyan);
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.footer-link {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+  color: var(--accent-cyan);
 }

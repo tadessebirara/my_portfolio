@@ -2,125 +2,163 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/sections/theme-toggle";
-
-const links = [
-  { href: "#home", label: "Home" },
-  { href: "#about", label: "About" },
-  { href: "#skills", label: "Skills" },
-  { href: "#experience", label: "Experience" },
+const navLinks = [
+  { href: "#home",     label: "Home" },
+  { href: "#about",    label: "About" },
+  { href: "#skills",   label: "Skills" },
   { href: "#projects", label: "Projects" },
-  { href: "#contact", label: "Contact" },
+  { href: "#services", label: "Services" },
+  { href: "#contact",  label: "Contact" },
 ];
 
 export function Navbar() {
-  const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [activeSection, setActiveSection] = useState("home");
+  const [open, setOpen]           = useState(false);
+  const [scrolled, setScrolled]   = useState(false);
+  const [active, setActive]       = useState("home");
 
+  /* scroll shadow */
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 12);
-    handleScroll();
-    window.addEventListener("scroll", handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 16);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
-    const sections = links
-      .map((link) => document.querySelector(link.href))
-      .filter(Boolean) as Element[];
+  /* active section tracker */
+  useEffect(() => {
+    const ids = navLinks.map((l) => l.href.replace("#", ""));
+    const sections = ids
+      .map((id) => document.getElementById(id))
+      .filter(Boolean) as HTMLElement[];
 
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
-          .filter((entry) => entry.isIntersecting)
+          .filter((e) => e.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) {
-          const id = visible.target.getAttribute("id") || "home";
-          setActiveSection(id);
-        }
+        if (visible) setActive(visible.target.id);
       },
-      { threshold: [0.3, 0.6], rootMargin: "-20% 0px -50% 0px" },
+      { threshold: 0.3, rootMargin: "-10% 0px -60% 0px" },
     );
 
-    sections.forEach((section) => observer.observe(section));
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      observer.disconnect();
-    };
+    sections.forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
   }, []);
 
   return (
     <header
-      className={`sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur-lg transition-all dark:border-slate-800 dark:bg-slate-950/80 ${scrolled ? "shadow-sm" : "shadow-none"}`}
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-[rgba(2,6,23,0.92)] shadow-[0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl"
+          : "bg-[rgba(2,6,23,0.70)] backdrop-blur-md"
+      }`}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
+
+        {/* ── Logo ── */}
         <Link
           href="/"
-          className="flex items-center gap-3 text-base font-semibold tracking-[0.3em] text-slate-950 dark:text-white"
+          className="flex items-center gap-3 group"
+          aria-label="Tadesse Birara – home"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-sm font-semibold text-white shadow-sm ring-1 ring-slate-200 dark:bg-sky-500 dark:text-slate-950 dark:ring-slate-700">
+          {/* Icon mark */}
+          <span
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold text-white shrink-0"
+            style={{ background: "var(--gradient-brand)" }}
+          >
             TB
           </span>
-          <span className="hidden sm:inline">TADESSE BIRARA</span>
+          {/* Brand text */}
+          <span className="hidden sm:block">
+            <span className="block text-[15px] font-bold leading-tight text-white tracking-wide">
+              Tadesse Birara
+            </span>
+            <span className="block text-[10px] font-medium leading-tight" style={{ color: "var(--text-secondary)" }}>
+              Building the future with code
+            </span>
+          </span>
         </Link>
-        <nav className="hidden items-center gap-1 md:flex">
-          {links.map((link) => {
-            const isActive = activeSection === link.href.replace("#", "");
+
+        {/* ── Desktop nav ── */}
+        <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
+          {navLinks.map(({ href, label }) => {
+            const isActive = active === href.replace("#", "");
             return (
               <a
-                key={link.href}
-                href={link.href}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive ? "bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950" : "text-slate-700 hover:text-slate-950 hover:bg-slate-100/50 dark:text-slate-200 dark:hover:text-white dark:hover:bg-slate-800/50"}`}
+                key={href}
+                href={href}
+                className={`nav-link ${isActive ? "active" : ""}`}
               >
-                {link.label}
+                {label}
               </a>
             );
           })}
-          <div className="ml-2 pl-2 border-l border-slate-200 dark:border-slate-700">
-            <ThemeToggle />
-          </div>
         </nav>
-        <div className="flex items-center gap-2 md:hidden">
-          <ThemeToggle />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="px-2"
-            onClick={() => setOpen((value) => !value)}
-            aria-label="Toggle navigation"
-          >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
-        </div>
+
+        {/* ── Download CV button ── */}
+        <a
+          href="/public/projects/My_Resume.pdf"
+          download
+          className="hidden md:inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 hover:-translate-y-0.5"
+          style={{ background: "var(--gradient-brand)" }}
+        >
+          <Download className="h-4 w-4" />
+          Download CV
+        </a>
+
+        {/* ── Mobile hamburger ── */}
+        <button
+          className="md:hidden flex items-center justify-center h-10 w-10 rounded-lg text-slate-300 hover:text-white transition-colors"
+          style={{ background: "rgba(255,255,255,0.05)" }}
+          onClick={() => setOpen((v) => !v)}
+          aria-label="Toggle navigation menu"
+          aria-expanded={open}
+        >
+          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
       </div>
+
+      {/* ── Mobile drawer ── */}
       <AnimatePresence>
-        {open ? (
+        {open && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden border-t border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95 md:hidden"
+            transition={{ duration: 0.22, ease: "easeInOut" }}
+            className="overflow-hidden md:hidden"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(2,6,23,0.97)" }}
           >
-            <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 sm:px-6">
-              {links.map((link) => {
-                const isActive = activeSection === link.href.replace("#", "");
+            <div className="flex flex-col gap-1 px-6 py-4">
+              {navLinks.map(({ href, label }) => {
+                const isActive = active === href.replace("#", "");
                 return (
                   <a
-                    key={link.href}
-                    href={link.href}
-                    className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive ? "bg-slate-900 text-white dark:bg-sky-500 dark:text-slate-950" : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"}`}
+                    key={href}
+                    href={href}
                     onClick={() => setOpen(false)}
+                    className={`nav-link py-2.5 ${isActive ? "active" : ""}`}
                   >
-                    {link.label}
+                    {label}
                   </a>
                 );
               })}
+              <a
+                href="/Tadesse-Birara-Resume.pdf"
+                download
+                onClick={() => setOpen(false)}
+                className="mt-3 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white"
+                style={{ background: "var(--gradient-brand)" }}
+              >
+                <Download className="h-4 w-4" />
+                Download CV
+              </a>
             </div>
           </motion.div>
-        ) : null}
+        )}
       </AnimatePresence>
     </header>
   );

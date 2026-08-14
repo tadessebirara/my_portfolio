@@ -1,44 +1,68 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Link from "next/link";
-
-import { SectionHeading } from "@/components/ui/section-heading";
+import { ArrowLeft } from "lucide-react";
+import { Navbar } from "@/components/layout/navbar";
+import { Footer } from "@/components/layout/footer";
 import { ProjectCard } from "@/components/projects/project-card";
 import { projects } from "@/data/projects";
-import { Navbar } from "@/components/layout/navbar";
 
 export default function ProjectsPage() {
   return (
-    <div className="min-h-screen bg-white text-slate-950 dark:bg-slate-950 dark:text-white">
+    <>
       <Navbar />
-      <main className="px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <SectionHeading
-            eyebrow="Projects"
-            title="Selected case studies"
-            description="Explore the full story for each project, including the problem, solution, and technical approach."
-          />
-          <div className="mt-14 grid gap-8 lg:grid-cols-3">
-            {projects.map((project) => (
-              <ProjectCard key={project.slug} project={project} />
-            ))}
-          </div>
-          <div className="mt-12 text-sm text-slate-600 dark:text-slate-100">
-            <p>
-              Each case study describes the architecture, engineering
-              challenges, and the approach used to build the application.
+      <main className="relative min-h-screen px-6 py-20 lg:px-10">
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 -z-10"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 50% at 50% -5%, rgba(36, 100, 239, 0.14) 0%, transparent 60%)",
+          }}
+        />
+        <div className="mx-auto max-w-7xl space-y-12">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm font-medium transition-colors duration-200"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to home
+          </Link>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-3"
+          >
+            <span className="section-eyebrow">Portfolio</span>
+            <h1 className="text-3xl font-extrabold text-white sm:text-4xl">
+              All Projects
+            </h1>
+            <p className="max-w-xl text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+              Explore the full list of projects — each one built with thoughtful
+              architecture and a focus on real-world value.
             </p>
-            <p className="mt-4">
-              <Link
-                href="/"
-                className="font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300"
+          </motion.div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {projects.map((project, i) => (
+              <motion.div
+                key={project.slug}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: i * 0.07 }}
+                className="flex"
               >
-                View all projects on the homepage
-              </Link>
-            </p>
+                <ProjectCard project={project} />
+              </motion.div>
+            ))}
           </div>
         </div>
       </main>
-    </div>
+      <Footer />
+    </>
   );
 }

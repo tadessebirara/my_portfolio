@@ -66,7 +66,7 @@ My broader development stack includes:
 
 ## 📂 Project Structure
 
-```text
+ 
 my_portfolio_website/
 ├── public/
 │   ├── images/
@@ -86,7 +86,7 @@ my_portfolio_website/
 ├── postcss.config.mjs
 ├── README.md
 └── tsconfig.json
-```
+ 
 
 ## ⚙️ Getting Started
 

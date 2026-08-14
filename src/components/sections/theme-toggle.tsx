@@ -12,7 +12,7 @@ export function ThemeToggle() {
     const storedTheme = window.localStorage.getItem("theme");
     const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     const resolvedTheme = storedTheme === "light" || storedTheme === "dark" ? storedTheme : systemTheme;
-    setTheme(resolvedTheme);
+    // setTheme(resolvedTheme);
     document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
   }, []);
 
