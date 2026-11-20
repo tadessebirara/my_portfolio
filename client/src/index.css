@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+:root {
+  --page: #182233;
+  --page-alt: #1e2a3f;
+  --card: #2a3852;
+  --card-strong: #33425e;
+  --input: #31415c;
+  --text: #f7f9fc;
+  --text-soft: #e7edf5;
+  --text-muted: #d3dce8;
+  --line: rgba(255, 255, 255, 0.2);
+  --line-strong: rgba(255, 255, 255, 0.28);
+  --accent: #38bdf8;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background-color: var(--page);
+  color: var(--text-soft);
+}
+
+body {
+  color: var(--text-soft);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(56, 189, 248, 0.35);
+  color: #ffffff;
+}
+
+/* Page backgrounds */
+[class*="bg-[#090D16]"],
+[class*="bg-[#090d16]"],
+[class*="bg-[#0C121E]"],
+[class*="bg-[#0c121e]"],
+[class*="bg-[#0A0F1A]"],
+[class*="bg-[#0a0f1a]"] {
+  background-color: var(--page) !important;
+}
+
+/* Cards, nav, forms, and panels */
+[class*="bg-[#0D1322]"],
+[class*="bg-[#0d1322]"],
+[class*="bg-[#0A101C]"],
+[class*="bg-[#0a101c]"],
+[class*="bg-[#0B1220]"],
+[class*="bg-[#0b1220]"],
+[class*="bg-[#0B1524]"],
+[class*="bg-[#0b1524]"],
+[class*="bg-[#0B1528]"],
+[class*="bg-[#0b1528]"],
+[class*="bg-[#0F172A]"],
+[class*="bg-[#0f172a]"],
+[class*="bg-[#11182A]"],
+[class*="bg-[#11182a]"],
+[class*="bg-[#111A2A]"],
+[class*="bg-[#111a2a]"],
+[class*="bg-[#111928]"] {
+  background-color: var(--card) !important;
+}
+
+/* Faint glass surfaces become real cards */
+[class*="bg-white/[0.02]"],
+[class*="bg-white/[0.025]"],
+[class*="bg-white/[0.03]"],
+[class*="bg-white/[0.04]"],
+[class*="bg-white/[0.05]"] {
+  background-color: var(--card) !important;
+}
+
+/* Text contrast */
+.text-white {
+  color: #ffffff !important;
+}
+
+.text-slate-100,
+.text-slate-200 {
+  color: var(--text) !important;
+}
+
+.text-slate-300 {
+  color: var(--text-soft) !important;
+}
+
+.text-slate-400 {
+  color: var(--text-muted) !important;
+}
+
+.text-slate-500,
+.text-slate-600 {
+  color: #c5d0e0 !important;
+}
+
+/* Borders */
+[class*="border-white/5"],
+[class*="border-white/[0.05]"],
+[class*="border-white/[0.06]"],
+[class*="border-white/[0.08]"],
+[class*="border-white/10"],
+[class*="border-white/[0.1]"],
+[class*="border-white/15"],
+[class*="border-white/[0.15]"] {
+  border-color: var(--line) !important;
+}
+
+/* Inputs and text areas stay readable */
+input,
+textarea,
+select {
+  color: #ffffff;
+  caret-color: var(--accent);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #b7c3d4;
+}
+
+/* Focus is visible without changing the layout */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.7);
+  outline-offset: 2px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #121a28;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4b6284;
+  border-radius: 999px;
+  border: 2px solid #121a28;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #647da3;
+}
