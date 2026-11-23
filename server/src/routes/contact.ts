@@ -3,14 +3,11 @@ import validator from "validator";
 
 import { contactLimiter } from "../middleware/rateLimiter.js";
 import { ApiError } from "../middleware/errorHandler.js";
+import { supabase } from "../config/supabase.js";
 import { sendContactEmail } from "../services/emailService.js";
 import { sendTelegramNotification } from "../services/telegramService.js";
 
 const router = Router();
-
-/* ============================================================
-   VALIDATION LIMITS
-   ============================================================ */
 
 const LIMITS = {
   nameMin: 2,
@@ -22,40 +19,25 @@ const LIMITS = {
   messageMax: 5000,
 };
 
-/* ============================================================
-   CONTACT FORM ROUTE
-   POST /api/contact
-   ============================================================ */
-
 router.post("/", contactLimiter, async (req, res, next): Promise<void> => {
   const requestStart = performance.now();
 
   try {
     const body = req.body ?? {};
 
-    /* --------------------------------------------------------
-       1. HONEYPOT
-       -------------------------------------------------------- */
-
+    // 1. Honeypot spam protection
     if (body.website) {
       res.status(200).json({
         success: true,
         message: "Thank you.",
       });
-
       return;
     }
 
-    /* --------------------------------------------------------
-       2. EXTRACT INPUTS
-       -------------------------------------------------------- */
-
+    // 2. Extract inputs
     const { name, email, projectType, budget, message, agreement } = body;
 
-    /* --------------------------------------------------------
-       3. REQUIRED FIELD TYPES
-       -------------------------------------------------------- */
-
+    // 3. Validate required field types
     if (
       typeof name !== "string" ||
       typeof email !== "string" ||
@@ -64,10 +46,7 @@ router.post("/", contactLimiter, async (req, res, next): Promise<void> => {
       throw new ApiError(400, "Name, email, and message are required.");
     }
 
-    /* --------------------------------------------------------
-       4. NORMALIZE INPUTS
-       -------------------------------------------------------- */
-
+    // 4. Normalize inputs
     const cleanName = name.trim();
     const cleanEmail = email.trim();
     const cleanMessage = message.trim();
@@ -89,18 +68,12 @@ router.post("/", contactLimiter, async (req, res, next): Promise<void> => {
 
     const cleanBudget = typeof budget === "string" ? budget.trim() : "";
 
-    /* --------------------------------------------------------
-       5. REQUIRED FIELDS
-       -------------------------------------------------------- */
-
+    // 5. Required fields
     if (!cleanName || !cleanEmail || !cleanMessage) {
       throw new ApiError(400, "Name, email, and message are required.");
     }
 
-    /* --------------------------------------------------------
-       6. NAME VALIDATION
-       -------------------------------------------------------- */
-
+    // 6. Name validation
     if (
       cleanName.length < LIMITS.nameMin ||
       cleanName.length > LIMITS.nameMax
@@ -111,18 +84,12 @@ router.post("/", contactLimiter, async (req, res, next): Promise<void> => {
       );
     }
 
-    /* --------------------------------------------------------
-       7. EMAIL VALIDATION
-       -------------------------------------------------------- */
-
+    // 7. Email validation
     if (cleanEmail.length > LIMITS.emailMax || !validator.isEmail(cleanEmail)) {
       throw new ApiError(400, "Please provide a valid email address.");
     }
 
-    /* --------------------------------------------------------
-       8. PROJECT TYPE VALIDATION
-       -------------------------------------------------------- */
-
+    // 8. Project type validation
     if (cleanProjectType.length > LIMITS.projectTypeMax) {
       throw new ApiError(
         400,
@@ -130,10 +97,7 @@ router.post("/", contactLimiter, async (req, res, next): Promise<void> => {
       );
     }
 
-    /* --------------------------------------------------------
-       9. BUDGET VALIDATION
-       -------------------------------------------------------- */
-
+    // 9. Budget validation
     if (cleanBudget.length > LIMITS.budgetMax) {
       throw new ApiError(
         400,
@@ -141,10 +105,7 @@ router.post("/", contactLimiter, async (req, res, next): Promise<void> => {
       );
     }
 
-    /* --------------------------------------------------------
-       10. MESSAGE VALIDATION
-       -------------------------------------------------------- */
-
+    // 10. Message validation
     if (
       cleanMessage.length < LIMITS.messageMin ||
       cleanMessage.length > LIMITS.messageMax
@@ -155,10 +116,7 @@ router.post("/", contactLimiter, async (req, res, next): Promise<void> => {
       );
     }
 
-    /* --------------------------------------------------------
-       11. AGREEMENT VALIDATION
-       -------------------------------------------------------- */
-
+    // 11. Agreement validation
     if (agreement !== true) {
       throw new ApiError(
         400,
@@ -166,10 +124,7 @@ router.post("/", contactLimiter, async (req, res, next): Promise<void> => {
       );
     }
 
-    /* --------------------------------------------------------
-       12. PREPARE PAYLOAD
-       -------------------------------------------------------- */
-
+    // 12. Prepare validated payload
     const payload = {
       name: cleanName,
       email: validator.normalizeEmail(cleanEmail) || cleanEmail,
@@ -179,29 +134,53 @@ router.post("/", contactLimiter, async (req, res, next): Promise<void> => {
       agreement: true,
     };
 
-    /* --------------------------------------------------------
-       13. SEND EMAIL
-       -------------------------------------------------------- */
-
     console.log("[Contact] Processing new inquiry...");
 
-    await sendContactEmail(payload);
+    // 13. Save inquiry to Supabase FIRST
+    const { error: databaseError } = await supabase
+      .from("contact_inquiries")
+      .insert({
+        name: payload.name,
+        email: payload.email,
+        project_type: payload.projectType ?? null,
+        budget: payload.budget ?? null,
+        message: payload.message,
+        agreement: payload.agreement,
+      });
 
-    /* --------------------------------------------------------
-       14. START TELEGRAM NOTIFICATION
-       -------------------------------------------------------- */
+    if (databaseError) {
+      console.error("[Contact] Database save failed:", databaseError.message);
 
-    // Do not wait for Telegram.
-    // Telegram failures must not affect successful email delivery.
+      throw new ApiError(
+        500,
+        "We could not save your inquiry. Please try again later.",
+      );
+    }
 
-    void sendTelegramNotification(payload).catch(() => {
-      console.error("[Contact] Telegram notification failed.");
+    console.log("[Contact] Inquiry saved successfully.");
+
+    // 14. Send email notification in the background
+    // Email failure must not undo the saved inquiry.
+    void sendContactEmail(payload)
+      .then(() => {
+        console.log("[Contact] Email notification sent.");
+      })
+      .catch((error: unknown) => {
+        console.error(
+          "[Contact] Email notification failed:",
+          error instanceof Error ? error.message : "Unknown error",
+        );
+      });
+
+    // 15. Send Telegram notification in the background
+    void sendTelegramNotification(payload).catch((error: unknown) => {
+      console.error(
+        "[Contact] Telegram notification failed:",
+        error instanceof Error ? error.message : "Unknown error",
+      );
     });
 
-    /* --------------------------------------------------------
-       15. SUCCESS RESPONSE
-       -------------------------------------------------------- */
-
+    // 16. Return success after database confirmation
     console.log(
       `[Contact] Request completed in ${(performance.now() - requestStart).toFixed(0)}ms`,
     );
@@ -209,7 +188,7 @@ router.post("/", contactLimiter, async (req, res, next): Promise<void> => {
     res.status(200).json({
       success: true,
       message:
-        "Your inquiry was sent successfully. I'll respond within 24 hours.",
+        "Your inquiry has been received successfully. I'll respond within 24 hours.",
     });
   } catch (error) {
     console.error(
