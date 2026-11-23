@@ -1,40 +1,44 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import path from "path";
-import fs from "fs";
 
 import { env } from "./config/env.js";
+import { UPLOAD_DIR } from "./config/storage.js";
+
 import { apiLimiter } from "./middleware/rateLimiter.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 import { verifyEmailConnection } from "./services/emailService.js";
+
 import contactRoutes from "./routes/contact.js";
 import healthRoutes from "./routes/health.js";
 import projectRoutes from "./routes/projects.js";
 
 const app = express();
 
+/* ============================================================
+   PROXY CONFIGURATION
+   ============================================================ */
+
 app.set("trust proxy", 1);
 
-// ==========================================
-// CORS CONFIGURATION
-// ==========================================
+/* ============================================================
+   CORS CONFIGURATION
+   ============================================================ */
 
-// IMPORTANT:
-// These must be frontend origins, not backend API URLs.
-// Add your actual deployed frontend domain here.
+// Add deployed frontend origins through CLIENT_URL.
+// Multiple origins can be separated with commas.
 const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-  "https://my-portfolio-4-q2tj.onrender.com",
+  ...env.CLIENT_URL.split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests without an Origin header
-      // (e.g. server-to-server requests and health checks).
       if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
@@ -42,10 +46,8 @@ app.use(
       return callback(new Error(`CORS blocked this origin: ${origin}`));
     },
 
-    // Allow all methods used by the API.
     methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 
-    // Allow headers used by frontend requests.
     allowedHeaders: ["Content-Type", "Authorization", "x-admin-key"],
 
     credentials: false,
@@ -53,9 +55,9 @@ app.use(
   }),
 );
 
-// ==========================================
-// SECURITY CONFIGURATION
-// ==========================================
+/* ============================================================
+   SECURITY CONFIGURATION
+   ============================================================ */
 
 app.use(
   helmet({
@@ -67,48 +69,46 @@ app.use(
   }),
 );
 
-// ==========================================
-// BODY PARSING
-// ==========================================
+/* ============================================================
+   BODY PARSING
+   ============================================================ */
 
 app.use(express.json({ limit: "10kb" }));
 
-// ==========================================
-// FILE UPLOAD CONFIGURATION
-// ==========================================
-
-const UPLOAD_DIR = path.join(process.cwd(), "uploads");
-
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+/* ============================================================
+   PERSISTENT IMAGE STORAGE
+   ============================================================ */
 
 app.use(
   "/uploads",
   express.static(UPLOAD_DIR, {
     maxAge: "1d",
+
     setHeaders: (res) => {
       res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+
       res.setHeader("Access-Control-Allow-Origin", "*");
     },
   }),
 );
 
-// ==========================================
-// API RATE LIMITING
-// ==========================================
+/* ============================================================
+   API RATE LIMITING
+   ============================================================ */
 
 app.use("/api", apiLimiter);
 
-// ==========================================
-// API ROUTES
-// ==========================================
+/* ============================================================
+   API ROUTES
+   ============================================================ */
 
 app.use("/api/health", healthRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/projects", projectRoutes);
 
-// ==========================================
-// ROOT ROUTE
-// ==========================================
+/* ============================================================
+   ROOT ROUTE
+   ============================================================ */
 
 app.get("/", (_req, res) => {
   res.status(200).json({
@@ -119,23 +119,24 @@ app.get("/", (_req, res) => {
   });
 });
 
-// ==========================================
-// ERROR HANDLING
-// ==========================================
+/* ============================================================
+   ERROR HANDLING
+   ============================================================ */
 
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// ==========================================
-// SERVER STARTUP
-// ==========================================
+/* ============================================================
+   SERVER STARTUP
+   ============================================================ */
 
 const PORT = Number(process.env.PORT) || env.PORT || 5000;
 
 app.listen(PORT, async () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`🔑 ADMIN_KEY loaded: ${process.env.ADMIN_KEY ? "yes" : "NO"}`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${env.NODE_ENV}`);
+  console.log(`Storage directory: ${UPLOAD_DIR}`);
+  console.log(`ADMIN_KEY loaded: ${process.env.ADMIN_KEY ? "yes" : "NO"}`);
 
   try {
     await verifyEmailConnection();

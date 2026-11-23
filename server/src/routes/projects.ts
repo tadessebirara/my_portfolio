@@ -1,28 +1,19 @@
-
 import {
   Router,
   type Request,
   type Response,
   type NextFunction,
 } from "express";
+
 import multer from "multer";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { randomUUID } from "crypto";
 
+import { DATA_FILE, UPLOAD_DIR } from "../config/storage.js";
+
 const router = Router();
-
-/* ============================================================
-   STORAGE CONFIGURATION
-   ============================================================ */
-
-const DATA_DIR = path.join(process.cwd(), "data");
-const UPLOAD_DIR = path.join(process.cwd(), "uploads");
-const DATA_FILE = path.join(DATA_DIR, "projects.json");
-
-fs.mkdirSync(DATA_DIR, { recursive: true });
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 /* ============================================================
    PROJECT INTERFACE
@@ -60,9 +51,9 @@ function readProjects(): ProjectRecord[] {
       return [];
     }
 
-    const projects = JSON.parse(data);
+    const projects: unknown = JSON.parse(data);
 
-    return Array.isArray(projects) ? projects : [];
+    return Array.isArray(projects) ? (projects as ProjectRecord[]) : [];
   } catch (error) {
     console.error("Error reading projects:", error);
     return [];
@@ -70,11 +61,7 @@ function readProjects(): ProjectRecord[] {
 }
 
 function writeProjects(projects: ProjectRecord[]): void {
-  fs.writeFileSync(
-    DATA_FILE,
-    JSON.stringify(projects, null, 2),
-    "utf-8"
-  );
+  fs.writeFileSync(DATA_FILE, JSON.stringify(projects, null, 2), "utf-8");
 }
 
 /* ============================================================
@@ -83,7 +70,10 @@ function writeProjects(projects: ProjectRecord[]): void {
 
 function parseTags(value: unknown): string[] {
   if (Array.isArray(value)) {
-    return value.map(String).map((tag) => tag.trim()).filter(Boolean);
+    return value
+      .map(String)
+      .map((tag) => tag.trim())
+      .filter(Boolean);
   }
 
   if (typeof value === "string") {
@@ -103,6 +93,10 @@ function parseBoolean(value: unknown): boolean {
 function getString(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value.trim() : fallback;
 }
+
+/* ============================================================
+   IMAGE DELETION
+   ============================================================ */
 
 function deleteUploadedImage(imagePath: string): void {
   if (!imagePath || !imagePath.startsWith("/uploads/")) {
@@ -132,6 +126,7 @@ const storage = multer.diskStorage({
 
   filename: (_req, file, callback) => {
     const extension = path.extname(file.originalname).toLowerCase();
+
     const filename = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}${extension}`;
 
     callback(null, filename);
@@ -158,7 +153,7 @@ const upload = multer({
       callback(null, true);
     } else {
       callback(
-        new Error("Only JPEG, PNG, WEBP, GIF, and AVIF images are allowed.")
+        new Error("Only JPEG, PNG, WEBP, GIF, and AVIF images are allowed."),
       );
     }
   },
@@ -168,11 +163,7 @@ const upload = multer({
    ADMIN AUTHENTICATION MIDDLEWARE
    ============================================================ */
 
-function requireAdmin(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
+function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   const configuredKey = process.env.ADMIN_KEY;
   const providedKey = req.headers["x-admin-key"];
 
@@ -213,6 +204,7 @@ function requireAdmin(
 
 router.post("/admin/verify", (req: Request, res: Response) => {
   const configuredKey = process.env.ADMIN_KEY;
+
   const providedKey =
     req.body?.adminKey || req.body?.key || req.headers["x-admin-key"];
 
@@ -228,7 +220,7 @@ router.post("/admin/verify", (req: Request, res: Response) => {
     Buffer.byteLength(providedKey) !== Buffer.byteLength(configuredKey) ||
     !crypto.timingSafeEqual(
       Buffer.from(providedKey),
-      Buffer.from(configuredKey)
+      Buffer.from(configuredKey),
     )
   ) {
     res.status(401).json({
@@ -245,7 +237,7 @@ router.post("/admin/verify", (req: Request, res: Response) => {
 
 /* ============================================================
    GET ALL PROJECTS
-   GET /
+   GET /api/projects
    ============================================================ */
 
 router.get("/", (_req: Request, res: Response) => {
@@ -256,15 +248,13 @@ router.get("/", (_req: Request, res: Response) => {
 
 /* ============================================================
    GET SINGLE PROJECT
-   GET /:id
+   GET /api/projects/:id
    ============================================================ */
 
 router.get("/:id", (req: Request, res: Response) => {
   const projects = readProjects();
 
-  const project = projects.find(
-    (item) => item.id === req.params.id
-  );
+  const project = projects.find((item) => item.id === req.params.id);
 
   if (!project) {
     res.status(404).json({
@@ -278,7 +268,7 @@ router.get("/:id", (req: Request, res: Response) => {
 
 /* ============================================================
    CREATE PROJECT
-   POST /
+   POST /api/projects
    ============================================================ */
 
 router.post(
@@ -301,7 +291,7 @@ router.post(
 
       if (!title || !String(title).trim()) {
         if (req.file) {
-          fs.unlinkSync(req.file.path);
+          deleteUploadedImage(`/uploads/${req.file.filename}`);
         }
 
         res.status(400).json({
@@ -317,9 +307,7 @@ router.post(
         title: getString(title),
         subtitle: getString(subtitle),
         category: getString(category),
-        image: req.file
-          ? `/uploads/${req.file.filename}`
-          : "",
+        image: req.file ? `/uploads/${req.file.filename}` : "",
         problem: getString(problem),
         solution: getString(solution),
         tags: parseTags(req.body.tags),
@@ -346,14 +334,13 @@ router.post(
         error: "Could not create project.",
       });
     }
-  }
+  },
 );
 
 /* ============================================================
    UPDATE PROJECT
-   PUT /:id
+   PUT /api/projects/:id
 
-   IMPORTANT:
    - Supports editing project details.
    - Keeps the existing image if no new image is uploaded.
    - Replaces the image if a new image is uploaded.
@@ -368,7 +355,7 @@ router.put(
       const projects = readProjects();
 
       const projectIndex = projects.findIndex(
-        (item) => item.id === req.params.id
+        (item) => item.id === req.params.id,
       );
 
       if (projectIndex === -1) {
@@ -397,10 +384,7 @@ router.put(
         tags,
       } = req.body;
 
-      if (
-        title !== undefined &&
-        !String(title).trim()
-      ) {
+      if (title !== undefined && !String(title).trim()) {
         if (req.file) {
           deleteUploadedImage(`/uploads/${req.file.filename}`);
         }
@@ -414,10 +398,7 @@ router.put(
       const updatedProject: ProjectRecord = {
         ...existingProject,
 
-        title:
-          title !== undefined
-            ? getString(title)
-            : existingProject.title,
+        title: title !== undefined ? getString(title) : existingProject.title,
 
         subtitle:
           subtitle !== undefined
@@ -430,24 +411,17 @@ router.put(
             : existingProject.category,
 
         problem:
-          problem !== undefined
-            ? getString(problem)
-            : existingProject.problem,
+          problem !== undefined ? getString(problem) : existingProject.problem,
 
         solution:
           solution !== undefined
             ? getString(solution)
             : existingProject.solution,
 
-        tags:
-          tags !== undefined
-            ? parseTags(tags)
-            : existingProject.tags,
+        tags: tags !== undefined ? parseTags(tags) : existingProject.tags,
 
         liveUrl:
-          liveUrl !== undefined
-            ? getString(liveUrl)
-            : existingProject.liveUrl,
+          liveUrl !== undefined ? getString(liveUrl) : existingProject.liveUrl,
 
         sourceUrl:
           sourceUrl !== undefined
@@ -464,12 +438,10 @@ router.put(
             ? parseBoolean(hasLiveDemo)
             : existingProject.hasLiveDemo,
 
-        // Preserve the old image unless a new one is uploaded.
         image: req.file
           ? `/uploads/${req.file.filename}`
           : existingProject.image,
 
-        // Preserve the original creation date.
         createdAt: existingProject.createdAt,
       };
 
@@ -477,7 +449,6 @@ router.put(
 
       writeProjects(projects);
 
-      // Delete the old image only after the updated record is saved.
       if (req.file && existingProject.image) {
         deleteUploadedImage(existingProject.image);
       }
@@ -494,68 +465,59 @@ router.put(
         error: "Could not update project.",
       });
     }
-  }
+  },
 );
 
 /* ============================================================
    DELETE PROJECT
-   DELETE /:id
+   DELETE /api/projects/:id
    ============================================================ */
 
-router.delete(
-  "/:id",
-  requireAdmin,
-  (req: Request, res: Response) => {
-    try {
-      const projects = readProjects();
+router.delete("/:id", requireAdmin, (req: Request, res: Response) => {
+  try {
+    const projects = readProjects();
 
-      const projectIndex = projects.findIndex(
-        (item) => item.id === req.params.id
-      );
+    const projectIndex = projects.findIndex(
+      (item) => item.id === req.params.id,
+    );
 
-      if (projectIndex === -1) {
-        res.status(404).json({
-          error: "Project not found.",
-        });
-        return;
-      }
-
-      const deletedProject = projects[projectIndex];
-
-      projects.splice(projectIndex, 1);
-
-      writeProjects(projects);
-
-      if (deletedProject.image) {
-        deleteUploadedImage(deletedProject.image);
-      }
-
-      res.json({
-        success: true,
-        message: "Project deleted successfully.",
-        id: deletedProject.id,
+    if (projectIndex === -1) {
+      res.status(404).json({
+        error: "Project not found.",
       });
-    } catch (error) {
-      console.error("Delete project error:", error);
-
-      res.status(500).json({
-        error: "Could not delete project.",
-      });
+      return;
     }
+
+    const deletedProject = projects[projectIndex];
+
+    projects.splice(projectIndex, 1);
+
+    writeProjects(projects);
+
+    if (deletedProject.image) {
+      deleteUploadedImage(deletedProject.image);
+    }
+
+    res.json({
+      success: true,
+      message: "Project deleted successfully.",
+      id: deletedProject.id,
+    });
+  } catch (error) {
+    console.error("Delete project error:", error);
+
+    res.status(500).json({
+      error: "Could not delete project.",
+    });
   }
-);
+});
 
 /* ============================================================
    MULTER ERROR HANDLER
    ============================================================ */
 
 router.use(
-  (
-    error: Error,
-    _req: Request,
-    res: Response,
-    _next: NextFunction
-  ) => {
+  (error: Error, _req: Request, res: Response, _next: NextFunction) => {
     if (error instanceof multer.MulterError) {
       res.status(400).json({
         error:
@@ -566,12 +528,10 @@ router.use(
       return;
     }
 
-    if (error) {
-      res.status(400).json({
-        error: error.message || "File upload failed.",
-      });
-    }
-  }
+    res.status(400).json({
+      error: error.message || "File upload failed.",
+    });
+  },
 );
 
 export default router;
