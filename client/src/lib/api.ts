@@ -1,11 +1,13 @@
- 
 const API_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:5000"
 ).replace(/\/+$/, "");
 
 const SERVER_URL = API_URL.endsWith("/api") ? API_URL.slice(0, -4) : API_URL;
 
-// Contact form payload shared with Contact.tsx
+// ==============================
+// CONTACT TYPES
+// ==============================
+
 export interface ContactPayload {
   name: string;
   email: string;
@@ -20,7 +22,10 @@ export interface ContactResponse {
   error?: string;
 }
 
-// Project interface
+// ==============================
+// PROJECT TYPES
+// ==============================
+
 export interface Project {
   id: string;
   title: string;
@@ -37,10 +42,14 @@ export interface Project {
   createdAt?: string;
 }
 
-// Convert uploaded image paths into accessible URLs
+// ==============================
+// IMAGE URL
+// ==============================
+
 export function imageUrl(path: string | null | undefined): string {
   if (!path) return "";
 
+  // Already a complete URL
   if (/^https?:\/\//i.test(path)) {
     return path;
   }
@@ -50,7 +59,10 @@ export function imageUrl(path: string | null | undefined): string {
   return `${SERVER_URL}/uploads/${clean}`;
 }
 
-// Get all portfolio projects
+// ==============================
+// GET ALL PROJECTS
+// ==============================
+
 export async function getProjects(): Promise<Project[]> {
   const res = await fetch(`${API_URL}/projects`);
 
@@ -61,7 +73,10 @@ export async function getProjects(): Promise<Project[]> {
   return res.json();
 }
 
-// Verify admin key
+// ==============================
+// VERIFY ADMIN KEY
+// ==============================
+
 export async function verifyAdminKey(adminKey: string): Promise<boolean> {
   const res = await fetch(`${API_URL}/projects/admin/verify`, {
     method: "POST",
@@ -73,7 +88,10 @@ export async function verifyAdminKey(adminKey: string): Promise<boolean> {
   return res.ok;
 }
 
-// Create a new project
+// ==============================
+// CREATE PROJECT
+// ==============================
+
 export async function createProject(
   form: FormData,
   adminKey: string,
@@ -95,7 +113,36 @@ export async function createProject(
   return res.json();
 }
 
-// Delete a project
+// ==============================
+// UPDATE PROJECT
+// ==============================
+
+export async function updateProject(
+  id: string,
+  form: FormData,
+  adminKey: string,
+): Promise<Project> {
+  const res = await fetch(`${API_URL}/projects/${id}`, {
+    method: "PUT",
+    headers: {
+      "x-admin-key": adminKey,
+    },
+    body: form,
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+
+    throw new Error(data?.error || "Could not update project");
+  }
+
+  return res.json();
+}
+
+// ==============================
+// DELETE PROJECT
+// ==============================
+
 export async function deleteProject(
   id: string,
   adminKey: string,
@@ -114,7 +161,10 @@ export async function deleteProject(
   }
 }
 
-// Submit contact form
+// ==============================
+// SUBMIT CONTACT FORM
+// ==============================
+
 export async function submitContactForm(
   data: ContactPayload,
 ): Promise<ContactResponse> {

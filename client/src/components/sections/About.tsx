@@ -5,7 +5,7 @@ import SectionHeading from "../ui/SectionHeading";
 
 // 1. Put your image in the `public/` directory (e.g. public/profile.jpg)
 // 2. Change this string to "/profile.jpg" when ready.
-const profileImage = "../../../public/profile.jpg";
+const profileImage = "/profile.jpg";
 
 const points = [
   {
@@ -44,7 +44,7 @@ export function About() {
         <AnimatedSection>
           <SectionHeading
             label="About"
-            title="I engineer solutions that create business value"
+            title="I Designe and Develope solutions that create business value"
             description="I am a Software Engineer focused on turning real-world challenges into reliable digital products."
           />
         </AnimatedSection>
@@ -128,7 +128,7 @@ export function About() {
               <p>
                 Whether you need a business website, management system, mobile
                 app, or backend API, I focus on understanding the real problem
-                first — then engineering the right solution.
+                first — then Desiging and developing the right solution.
               </p>
 
               {/* Points Grid */}

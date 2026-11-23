@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ExternalLink,
   Github,
@@ -9,15 +9,18 @@ import {
   ZoomIn,
   X,
 } from "lucide-react";
-import { projects } from "../../data/projects";
+
 import { getProjects, imageUrl, type Project } from "../../lib/api";
+
 import AnimatedSection from "../ui/AnimatedSection";
 import SectionHeading from "../ui/SectionHeading";
 import ProjectManager from "../admin/ProjectManager";
 
-/* ------------------------------------------------------------
-   Shared card shape for hardcoded samples and saved projects
-   ------------------------------------------------------------ */
+/* ============================================================
+   PROJECT CARD MODEL
+   All projects now come from the backend.
+   ============================================================ */
+
 type CardModel = {
   key: string;
   title: string;
@@ -30,34 +33,11 @@ type CardModel = {
   githubUrl: string;
   image: string | null;
   footerLabel: string;
-  source: "sample" | "saved";
 };
 
-function fromSample(p: {
-  title: string;
-  status: string;
-  tagline: string;
-  problem: string;
-  solution: string;
-  technologies: string[];
-  liveUrl?: string;
-  githubUrl?: string;
-}): CardModel {
-  return {
-    key: `sample-${p.title}`,
-    title: p.title,
-    badge: p.status,
-    tagline: p.tagline,
-    problem: p.problem,
-    solution: p.solution,
-    technologies: p.technologies,
-    liveUrl: p.liveUrl ?? "",
-    githubUrl: p.githubUrl ?? "",
-    image: null,
-    footerLabel: "System Architecture",
-    source: "sample",
-  };
-}
+/* ============================================================
+   BACKEND PROJECT MAPPER
+   ============================================================ */
 
 function fromSaved(p: Project): CardModel {
   return {
@@ -72,54 +52,72 @@ function fromSaved(p: Project): CardModel {
     githubUrl: p.sourceUrl,
     image: p.image,
     footerLabel: p.footerLabel || "System Architecture",
-    source: "saved",
   };
 }
 
-/* ------------------------------------------------------------
-   Admin visibility
-   Shown only to you: when the URL has "?admin", or when the
-   admin key is already saved in this browser. Visitors never
-   see the button.
-   ------------------------------------------------------------ */
+/* ============================================================
+   ADMIN VISIBILITY
+   ============================================================ */
+
 function checkIsAdmin(): boolean {
   if (typeof window === "undefined") return false;
+
   const hasParam = new URLSearchParams(window.location.search).has("admin");
+
   const hasKey = !!localStorage.getItem("adminKey");
+
   return hasParam || hasKey;
 }
 
 /* ============================================================
-   SECTION
+   PROJECTS SECTION
    ============================================================ */
+
 export default function Projects() {
   const [saved, setSaved] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showManager, setShowManager] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(
-    null,
-  );
 
-  const fetchSaved = async () => {
+  const [lightbox, setLightbox] = useState<{
+    src: string;
+    alt: string;
+  } | null>(null);
+
+  /* ------------------------------------------------------------
+     FETCH PROJECTS FROM BACKEND
+     ------------------------------------------------------------ */
+
+  const fetchSaved = useCallback(async () => {
     try {
-      setSaved(await getProjects());
-    } catch {
-      setSaved([]);
+      const data = await getProjects();
+      setSaved(data);
+    } catch (error) {
+      console.error("Failed to fetch portfolio projects:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  /* ------------------------------------------------------------
+     INITIAL LOAD
+     ------------------------------------------------------------ */
 
   useEffect(() => {
     fetchSaved();
     setIsAdmin(checkIsAdmin());
-  }, []);
+  }, [fetchSaved]);
 
-  const cards: CardModel[] = [
-    ...projects.map(fromSample),
-    ...saved.map(fromSaved),
-  ];
+  /* ------------------------------------------------------------
+     MAP BACKEND PROJECTS
+     No hardcoded projects.
+     ------------------------------------------------------------ */
+
+  const cards: CardModel[] = saved.map(fromSaved);
+
+  /* ============================================================
+     RENDER
+     ============================================================ */
 
   return (
     <section
@@ -127,6 +125,8 @@ export default function Projects() {
       className="border-t border-white/5 bg-[#090D16] py-24 md:py-32"
     >
       <div className="mx-auto max-w-6xl px-6">
+        {/* SECTION HEADING */}
+
         <AnimatedSection>
           <SectionHeading
             label="Selected Work"
@@ -135,7 +135,8 @@ export default function Projects() {
           />
         </AnimatedSection>
 
-        {/* ── project cards ───────────────────────────── */}
+        {/* PROJECT CARDS */}
+
         <div className="space-y-8">
           {cards.map((card, i) => (
             <AnimatedSection key={card.key} delay={i * 0.05}>
@@ -147,13 +148,32 @@ export default function Projects() {
           ))}
         </div>
 
+        {/* LOADING INDICATOR */}
+
         {loading && (
           <div className="mt-8 flex items-center justify-center">
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/15 border-t-white/70" />
           </div>
         )}
 
-        {/* ── Admin-only manage button ────────────────── */}
+        {/* EMPTY STATE */}
+
+        {!loading && cards.length === 0 && (
+          <div className="mt-10 rounded-2xl border border-white/10 bg-[#0C121E] px-6 py-12 text-center">
+            <Code2 className="mx-auto mb-4 h-10 w-10 text-slate-500" />
+
+            <h3 className="text-lg font-semibold text-white">
+              Projects Coming Soon
+            </h3>
+
+            <p className="mt-2 text-sm text-slate-400">
+              New projects will appear here soon.
+            </p>
+          </div>
+        )}
+
+        {/* ADMIN-ONLY MANAGE BUTTON */}
+
         {isAdmin && (
           <div className="mt-10 flex justify-center">
             <button
@@ -171,7 +191,8 @@ export default function Projects() {
         )}
       </div>
 
-      {/* admin modal */}
+      {/* PROJECT MANAGER MODAL */}
+
       {showManager && (
         <ProjectManager
           onClose={() => setShowManager(false)}
@@ -180,7 +201,8 @@ export default function Projects() {
         />
       )}
 
-      {/* full-screen image viewer */}
+      {/* FULL-SCREEN IMAGE VIEWER */}
+
       {lightbox && (
         <Lightbox
           src={lightbox.src}
@@ -193,8 +215,9 @@ export default function Projects() {
 }
 
 /* ============================================================
-   LIGHTBOX — full-screen image viewer
+   LIGHTBOX — FULL-SCREEN IMAGE VIEWER
    ============================================================ */
+
 function Lightbox({
   src,
   alt,
@@ -208,9 +231,12 @@ function Lightbox({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
+
     document.addEventListener("keydown", onKey);
+
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
@@ -247,6 +273,7 @@ function Lightbox({
 /* ============================================================
    PROJECT CARD
    ============================================================ */
+
 function ProjectCard({
   card,
   onOpenImage,
@@ -257,21 +284,25 @@ function ProjectCard({
   const hasLive = Boolean(card.liveUrl && card.liveUrl.trim());
   const hasGithub = Boolean(card.githubUrl && card.githubUrl.trim());
   const hasImage = Boolean(card.image);
-  const fullImage = hasImage ? imageUrl(card.image) : "";
+
+  const fullImage = hasImage ? imageUrl(card.image!) : "";
 
   return (
     <article className="group relative overflow-hidden rounded-3xl border border-white/10 bg-[#0C121E] transition-all duration-300 hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/10">
       <div className="grid lg:grid-cols-12">
-        {/* ── Left visual ─────────────────────────────── */}
+        {/* LEFT VISUAL */}
+
         <div className="relative flex min-h-[320px] flex-col items-center justify-center overflow-hidden border-b border-white/10 bg-[#05080f] p-6 lg:col-span-5 lg:border-b-0 lg:border-r">
           <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/10 blur-[80px] transition-all duration-500 group-hover:bg-blue-500/20" />
 
-          {/* badge */}
+          {/* CATEGORY BADGE */}
+
           <div className="absolute left-5 top-5 z-10 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs font-semibold tracking-wide text-blue-400 backdrop-blur-md">
             {card.badge}
           </div>
 
-          {/* screenshot (clickable) or letter fallback */}
+          {/* PROJECT IMAGE OR FALLBACK */}
+
           {hasImage ? (
             <button
               type="button"
@@ -288,25 +319,29 @@ function ProjectCard({
               />
 
               <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/60 px-3 py-1.5 text-xs font-medium text-white opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover/img:opacity-100">
-                <ZoomIn className="h-3.5 w-3.5" /> Click to enlarge
+                <ZoomIn className="h-3.5 w-3.5" />
+                Click to enlarge
               </span>
             </button>
           ) : (
             <div className="relative z-10 flex h-28 w-28 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.02] text-4xl font-bold text-white shadow-2xl backdrop-blur-xl transition-transform duration-500 group-hover:scale-110">
-              {card.title[0]}
+              {card.title?.[0] || "P"}
             </div>
           )}
 
-          {/* footer label */}
+          {/* FOOTER LABEL */}
+
           <div className="absolute bottom-5 right-5 flex items-center gap-2 text-slate-600">
             <Code2 size={16} />
+
             <span className="font-mono text-[10px] uppercase tracking-widest">
               {card.footerLabel}
             </span>
           </div>
         </div>
 
-        {/* ── Right content ───────────────────────────── */}
+        {/* RIGHT CONTENT */}
+
         <div className="flex flex-col p-8 lg:col-span-7 lg:p-10">
           <h3 className="mb-2 text-2xl font-bold tracking-tight text-white md:text-3xl">
             {card.title}
@@ -318,14 +353,18 @@ function ProjectCard({
             </p>
           )}
 
+          {/* PROBLEM AND SOLUTION */}
+
           <div className="mb-8 grid gap-6 md:grid-cols-2">
             <div className="rounded-xl border border-white/5 bg-white/[0.02] p-5">
               <div className="mb-2 flex items-center gap-2 text-rose-400">
                 <Target size={16} />
+
                 <h4 className="text-xs font-bold uppercase tracking-wider">
                   The Problem
                 </h4>
               </div>
+
               <p className="text-sm leading-relaxed text-slate-400">
                 {card.problem}
               </p>
@@ -334,15 +373,19 @@ function ProjectCard({
             <div className="rounded-xl border border-white/5 bg-white/[0.02] p-5">
               <div className="mb-2 flex items-center gap-2 text-emerald-400">
                 <Lightbulb size={16} />
+
                 <h4 className="text-xs font-bold uppercase tracking-wider">
                   The Solution
                 </h4>
               </div>
+
               <p className="text-sm leading-relaxed text-slate-400">
                 {card.solution}
               </p>
             </div>
           </div>
+
+          {/* TECHNOLOGIES */}
 
           {card.technologies.length > 0 && (
             <div className="mb-10 flex flex-wrap gap-2">
@@ -356,6 +399,8 @@ function ProjectCard({
               ))}
             </div>
           )}
+
+          {/* PROJECT ACTIONS */}
 
           <div className="mt-auto flex flex-wrap items-center gap-4 border-t border-white/10 pt-6">
             {hasLive ? (

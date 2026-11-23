@@ -182,7 +182,7 @@ export const Services: React.FC = () => {
             transition={{ delay: 0.1 }}
             className="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight leading-tight"
           >
-            How I Help Your Business
+          Turning Business Challenges into Digital Solutions
           </motion.h2>
 
           <motion.p
