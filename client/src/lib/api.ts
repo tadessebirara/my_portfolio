@@ -4,16 +4,18 @@ const API_URL = (
 
 const SERVER_URL = API_URL.endsWith("/api") ? API_URL.slice(0, -4) : API_URL;
 
-// ==============================
+// ============================================================
 // CONTACT TYPES
-// ==============================
+// ============================================================
 
 export interface ContactPayload {
   name: string;
   email: string;
   projectType: string;
+  budget?: string;
   message: string;
   agreement: boolean;
+  website?: string;
 }
 
 export interface ContactResponse {
@@ -22,9 +24,9 @@ export interface ContactResponse {
   error?: string;
 }
 
-// ==============================
+// ============================================================
 // PROJECT TYPES
-// ==============================
+// ============================================================
 
 export interface Project {
   id: string;
@@ -42,9 +44,22 @@ export interface Project {
   createdAt?: string;
 }
 
-// ==============================
+// ============================================================
+// SHARED API ERROR HANDLING
+// ============================================================
+
+async function getErrorMessage(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  const data = await response.json().catch(() => null);
+
+  return data?.error || data?.message || fallback;
+}
+
+// ============================================================
 // IMAGE URL
-// ==============================
+// ============================================================
 
 export function imageUrl(path: string | null | undefined): string {
   if (!path) return "";
@@ -59,23 +74,23 @@ export function imageUrl(path: string | null | undefined): string {
   return `${SERVER_URL}/uploads/${clean}`;
 }
 
-// ==============================
+// ============================================================
 // GET ALL PROJECTS
-// ==============================
+// ============================================================
 
 export async function getProjects(): Promise<Project[]> {
   const res = await fetch(`${API_URL}/projects`);
 
   if (!res.ok) {
-    throw new Error("Could not load projects");
+    throw new Error(await getErrorMessage(res, "Could not load projects."));
   }
 
   return res.json();
 }
 
-// ==============================
+// ============================================================
 // VERIFY ADMIN KEY
-// ==============================
+// ============================================================
 
 export async function verifyAdminKey(adminKey: string): Promise<boolean> {
   const res = await fetch(`${API_URL}/projects/admin/verify`, {
@@ -88,9 +103,9 @@ export async function verifyAdminKey(adminKey: string): Promise<boolean> {
   return res.ok;
 }
 
-// ==============================
+// ============================================================
 // CREATE PROJECT
-// ==============================
+// ============================================================
 
 export async function createProject(
   form: FormData,
@@ -105,17 +120,15 @@ export async function createProject(
   });
 
   if (!res.ok) {
-    const data = await res.json().catch(() => null);
-
-    throw new Error(data?.error || "Could not attach project");
+    throw new Error(await getErrorMessage(res, "Could not create project."));
   }
 
   return res.json();
 }
 
-// ==============================
+// ============================================================
 // UPDATE PROJECT
-// ==============================
+// ============================================================
 
 export async function updateProject(
   id: string,
@@ -131,17 +144,15 @@ export async function updateProject(
   });
 
   if (!res.ok) {
-    const data = await res.json().catch(() => null);
-
-    throw new Error(data?.error || "Could not update project");
+    throw new Error(await getErrorMessage(res, "Could not update project."));
   }
 
   return res.json();
 }
 
-// ==============================
+// ============================================================
 // DELETE PROJECT
-// ==============================
+// ============================================================
 
 export async function deleteProject(
   id: string,
@@ -155,15 +166,13 @@ export async function deleteProject(
   });
 
   if (!res.ok) {
-    const data = await res.json().catch(() => null);
-
-    throw new Error(data?.error || "Could not delete project");
+    throw new Error(await getErrorMessage(res, "Could not delete project."));
   }
 }
 
-// ==============================
+// ============================================================
 // SUBMIT CONTACT FORM
-// ==============================
+// ============================================================
 
 export async function submitContactForm(
   data: ContactPayload,
@@ -179,7 +188,17 @@ export async function submitContactForm(
   const response = await res.json().catch(() => null);
 
   if (!res.ok) {
-    throw new Error(response?.error || "Message could not be sent");
+    throw new Error(
+      response?.error ||
+        response?.message ||
+        "Message could not be sent. Please try again.",
+    );
+  }
+
+  if (!response?.success) {
+    throw new Error(
+      response?.message || "The server could not confirm your message.",
+    );
   }
 
   return response as ContactResponse;

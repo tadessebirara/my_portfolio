@@ -8,33 +8,52 @@ type ContactPayload = {
   message: string;
 };
 
-export async function sendTelegramNotification(data: ContactPayload) {
+export async function sendTelegramNotification(
+  data: ContactPayload,
+): Promise<void> {
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
-    return; // Silent skip if not configured
+    return;
   }
 
-  const text = `
-🚨 *New Portfolio Lead*
-
-👤 *Name:* ${data.name}
-📧 *Email:* ${data.email}
-${data.projectType ? `💼 *Project:* ${data.projectType}\n` : ""}${data.budget ? `💰 *Budget:* ${data.budget}\n` : ""}
-📝 *Message:*
-${data.message.slice(0, 300)}${data.message.length > 300 ? "..." : ""}
-  `.trim();
+  const text = [
+    "🚨 NEW PORTFOLIO LEAD",
+    "",
+    `👤 Name: ${data.name}`,
+    `📧 Email: ${data.email}`,
+    data.projectType ? `💼 Project: ${data.projectType}` : "",
+    data.budget ? `💰 Budget: ${data.budget}` : "",
+    "",
+    "📝 Message:",
+    `${data.message.slice(0, 300)}${data.message.length > 300 ? "..." : ""}`,
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
 
   try {
     const url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`;
-    await fetch(url, {
+
+    const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         chat_id: env.TELEGRAM_CHAT_ID,
         text,
-        parse_mode: "Markdown",
       }),
+      signal: AbortSignal.timeout(4000),
     });
+
+    if (!response.ok) {
+      console.error(
+        "Telegram notification failed with status:",
+        response.status,
+      );
+    }
   } catch (error) {
-    console.error("Telegram notification failed:", error);
+    console.error(
+      "Telegram notification failed:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
   }
 }

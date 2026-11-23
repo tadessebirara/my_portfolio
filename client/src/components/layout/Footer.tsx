@@ -45,7 +45,7 @@ const PROFILE = {
     },
     {
       name: "WhatsApp",
-      url: "https://wa.me/",
+      url: "https://wa.me/_251905653221",
       icon: MessageCircle,
     },
   ],
@@ -355,7 +355,7 @@ export const Footer: React.FC = () => {
 
           <div className="flex items-center justify-center gap-5">
             <span className="hidden text-xs text-slate-500 sm:block">
-              Engineering solutions. Creating impact.
+              Designing solutions. Creating impact.
             </span>
 
             <motion.button

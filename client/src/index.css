@@ -1,39 +1,140 @@
+
 @import "tailwindcss";
 
+/* ============================================================
+   PROFESSIONAL PORTFOLIO
+   ULTRA-CLEAR VISUAL DESIGN SYSTEM
+   Deep Navy | Bright White | Electric Blue
+   ============================================================ */
+
 :root {
-  --page: #182233;
-  --page-alt: #1e2a3f;
-  --card: #2a3852;
-  --card-strong: #33425e;
-  --input: #31415c;
-  --text: #f7f9fc;
-  --text-soft: #e7edf5;
-  --text-muted: #d3dce8;
-  --line: rgba(255, 255, 255, 0.2);
-  --line-strong: rgba(255, 255, 255, 0.28);
+  color-scheme: dark;
+
+  /* PAGE */
+  --page: #080e1b;
+  --page-alt: #0d1729;
+
+  /* SECTIONS */
+  --section: #111f35;
+  --section-alt: #0d192d;
+
+  /* CARDS */
+  --card: #1b2d49;
+  --card-hover: #243c5d;
+  --card-strong: #2d486c;
+
+  /* FORMS */
+  --input: #172944;
+
+  /* TEXT */
+  --text: #ffffff;
+  --text-soft: #f1f5fc;
+  --text-muted: #d1deef;
+  --text-subtle: #b3c5dc;
+
+  /* BORDERS */
+  --line: #3b506d;
+  --line-strong: #58718f;
+
+  /* ACCENT */
   --accent: #38bdf8;
+  --accent-hover: #7dd3fc;
+  --accent-strong: #0284c7;
+  --accent-soft: rgba(56, 189, 248, 0.16);
+
+  /* SHADOWS */
+  --shadow-card: 0 8px 22px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 15px 35px rgba(0, 0, 0, 0.42);
+
+  /* LAYOUT */
+  --content-width: 1280px;
+  --section-spacing: 100px;
+}
+
+/* ============================================================
+   1. GLOBAL RESET
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 html,
 body,
 #root {
+  width: 100%;
   min-height: 100%;
-  background-color: var(--page);
-  color: var(--text-soft);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 90px;
+  background: var(--page);
 }
 
 body {
+  margin: 0;
+  background: var(--page);
   color: var(--text-soft);
-  text-rendering: optimizeLegibility;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.7;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-::selection {
-  background: rgba(56, 189, 248, 0.35);
+#root {
+  isolation: isolate;
+}
+
+/* ============================================================
+   2. TYPOGRAPHY
+   ============================================================ */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--text);
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+h1 {
+  font-weight: 800;
+}
+
+p {
+  color: var(--text-soft);
+}
+
+strong,
+b {
   color: #ffffff;
+  font-weight: 700;
 }
 
-/* Page backgrounds */
+small {
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   3. PAGE AND SECTION BACKGROUNDS
+   ============================================================ */
+
+html,
+body {
+  background-color: var(--page);
+}
+
+/* Legacy page colors */
+
 [class*="bg-[#090D16]"],
 [class*="bg-[#090d16]"],
 [class*="bg-[#0C121E]"],
@@ -43,7 +144,18 @@ body {
   background-color: var(--page) !important;
 }
 
-/* Cards, nav, forms, and panels */
+/* Legacy section colors */
+
+[class*="bg-[#101827]"],
+[class*="bg-[#101c30]"],
+[class*="bg-[#0d1728]"] {
+  background-color: var(--section) !important;
+}
+
+/* ============================================================
+   4. CARD BACKGROUNDS
+   ============================================================ */
+
 [class*="bg-[#0D1322]"],
 [class*="bg-[#0d1322]"],
 [class*="bg-[#0A101C]"],
@@ -64,39 +176,54 @@ body {
   background-color: var(--card) !important;
 }
 
-/* Faint glass surfaces become real cards */
+/* ============================================================
+   5. TRANSPARENT SURFACES
+   ============================================================ */
+
 [class*="bg-white/[0.02]"],
 [class*="bg-white/[0.025]"],
 [class*="bg-white/[0.03]"],
 [class*="bg-white/[0.04]"],
 [class*="bg-white/[0.05]"] {
-  background-color: var(--card) !important;
+  background-color: rgba(255, 255, 255, 0.10) !important;
 }
 
-/* Text contrast */
+/* ============================================================
+   6. GLOBAL TEXT VISIBILITY
+   ============================================================ */
+
 .text-white {
   color: #ffffff !important;
 }
 
+.text-slate-50,
 .text-slate-100,
 .text-slate-200 {
-  color: var(--text) !important;
+  color: #ffffff !important;
 }
 
 .text-slate-300 {
-  color: var(--text-soft) !important;
+  color: #f1f5fc !important;
 }
 
 .text-slate-400 {
-  color: var(--text-muted) !important;
+  color: #d1deef !important;
 }
 
 .text-slate-500,
 .text-slate-600 {
-  color: #c5d0e0 !important;
+  color: #b3c5dc !important;
 }
 
-/* Borders */
+.text-sky-300,
+.text-sky-400 {
+  color: #38bdf8 !important;
+}
+
+/* ============================================================
+   7. BORDERS
+   ============================================================ */
+
 [class*="border-white/5"],
 [class*="border-white/[0.05]"],
 [class*="border-white/[0.06]"],
@@ -108,44 +235,232 @@ body {
   border-color: var(--line) !important;
 }
 
-/* Inputs and text areas stay readable */
+[class*="rounded-"][class*="border"] {
+  border-color: var(--line) !important;
+}
+
+/* ============================================================
+   8. CARDS
+   ============================================================ */
+
+[class*="rounded-"][class*="border"] {
+  box-shadow: var(--shadow-card);
+}
+
+a[class*="rounded-"],
+button[class*="rounded-"] {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+/* ============================================================
+   9. NAVIGATION
+   ============================================================ */
+
+nav a,
+header a {
+  color: var(--text-soft);
+}
+
+nav a:hover,
+header a:hover {
+  color: var(--accent-hover);
+}
+
+/* ============================================================
+   10. BUTTONS
+   ============================================================ */
+
+button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ============================================================
+   11. FORMS
+   ============================================================ */
+
 input,
 textarea,
 select {
+  width: 100%;
+  background: var(--input);
   color: #ffffff;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
   caret-color: var(--accent);
+  font: inherit;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #b7c3d4;
+  color: var(--text-subtle);
+  opacity: 1;
 }
 
-/* Focus is visible without changing the layout */
+input:hover,
+textarea:hover,
+select:hover {
+  border-color: var(--accent);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.17);
+}
+
+textarea {
+  resize: vertical;
+}
+
+/* ============================================================
+   12. LINKS
+   ============================================================ */
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+/* ============================================================
+   13. ICONS
+   ============================================================ */
+
+svg {
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   14. VISUAL EFFECTS
+   ============================================================ */
+
+/*
+  Remove frosted-glass blur from the main navigation.
+  Do not globally remove filters or opacity from every element.
+*/
+
+header,
+nav {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* ============================================================
+   15. IMAGES
+   ============================================================ */
+
+img,
+picture,
+video {
+  image-rendering: auto;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+video,
+iframe {
+  max-width: 100%;
+}
+
+/* ============================================================
+   16. FOCUS ACCESSIBILITY
+   ============================================================ */
+
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid rgba(56, 189, 248, 0.7);
-  outline-offset: 2px;
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
 }
 
-/* Scrollbar */
+/* ============================================================
+   17. SCROLLBAR
+   ============================================================ */
+
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #121a28;
+  background: var(--page);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4b6284;
+  background: #526b8a;
+  border: 2px solid var(--page);
   border-radius: 999px;
-  border: 2px solid #121a28;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #647da3;
+  background: #7896ba;
+}
+
+/* ============================================================
+   18. RESPONSIVE DESIGN
+   ============================================================ */
+
+@media (max-width: 768px) {
+  :root {
+    --section-spacing: 72px;
+  }
+
+  body {
+    font-size: 15px;
+  }
+
+  html {
+    scroll-padding-top: 75px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --section-spacing: 56px;
+  }
+
+  body {
+    font-size: 14px;
+  }
+}
+
+/* ============================================================
+   19. REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
