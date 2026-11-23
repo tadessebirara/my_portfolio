@@ -6,17 +6,17 @@ import {
 } from "express";
 
 import multer from "multer";
-import fs from "fs";
-import path from "path";
 import crypto from "crypto";
-import { randomUUID } from "crypto";
+import path from "path";
 
-import { DATA_FILE, UPLOAD_DIR } from "../config/storage.js";
+import { supabase } from "../config/supabase.js";
 
 const router = Router();
 
+const BUCKET_NAME = "project-images";
+
 /* ============================================================
-   PROJECT INTERFACE
+   PROJECT TYPES
    ============================================================ */
 
 interface ProjectRecord {
@@ -35,33 +35,43 @@ interface ProjectRecord {
   createdAt: string;
 }
 
-/* ============================================================
-   JSON DATABASE HELPERS
-   ============================================================ */
-
-function readProjects(): ProjectRecord[] {
-  try {
-    if (!fs.existsSync(DATA_FILE)) {
-      return [];
-    }
-
-    const data = fs.readFileSync(DATA_FILE, "utf-8");
-
-    if (!data.trim()) {
-      return [];
-    }
-
-    const projects: unknown = JSON.parse(data);
-
-    return Array.isArray(projects) ? (projects as ProjectRecord[]) : [];
-  } catch (error) {
-    console.error("Error reading projects:", error);
-    return [];
-  }
+interface DatabaseProject {
+  id: string;
+  title: string;
+  subtitle: string;
+  category: string;
+  image: string;
+  problem: string;
+  solution: string;
+  tags: string[];
+  live_url: string;
+  source_url: string;
+  footer_label: string;
+  has_live_demo: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
-function writeProjects(projects: ProjectRecord[]): void {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(projects, null, 2), "utf-8");
+/* ============================================================
+   DATABASE MAPPING
+   ============================================================ */
+
+function mapProject(row: DatabaseProject): ProjectRecord {
+  return {
+    id: row.id,
+    title: row.title,
+    subtitle: row.subtitle,
+    category: row.category,
+    image: row.image,
+    problem: row.problem,
+    solution: row.solution,
+    tags: row.tags || [],
+    liveUrl: row.live_url,
+    sourceUrl: row.source_url,
+    footerLabel: row.footer_label,
+    hasLiveDemo: row.has_live_demo,
+    createdAt: row.created_at,
+  };
 }
 
 /* ============================================================
@@ -95,43 +105,8 @@ function getString(value: unknown, fallback = ""): string {
 }
 
 /* ============================================================
-   IMAGE DELETION
+   IMAGE VALIDATION
    ============================================================ */
-
-function deleteUploadedImage(imagePath: string): void {
-  if (!imagePath || !imagePath.startsWith("/uploads/")) {
-    return;
-  }
-
-  const filename = path.basename(imagePath);
-  const fullPath = path.join(UPLOAD_DIR, filename);
-
-  try {
-    if (fs.existsSync(fullPath)) {
-      fs.unlinkSync(fullPath);
-    }
-  } catch (error) {
-    console.error("Could not delete image:", error);
-  }
-}
-
-/* ============================================================
-   MULTER IMAGE UPLOAD CONFIGURATION
-   ============================================================ */
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, callback) => {
-    callback(null, UPLOAD_DIR);
-  },
-
-  filename: (_req, file, callback) => {
-    const extension = path.extname(file.originalname).toLowerCase();
-
-    const filename = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}${extension}`;
-
-    callback(null, filename);
-  },
-});
 
 const allowedMimeTypes = [
   "image/jpeg",
@@ -142,7 +117,7 @@ const allowedMimeTypes = [
 ];
 
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
 
   limits: {
     fileSize: 8 * 1024 * 1024,
@@ -160,7 +135,85 @@ const upload = multer({
 });
 
 /* ============================================================
-   ADMIN AUTHENTICATION MIDDLEWARE
+   SUPABASE IMAGE UPLOAD
+   ============================================================ */
+
+const extensionByMimeType: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+  "image/avif": ".avif",
+};
+
+async function uploadProjectImage(file: Express.Multer.File): Promise<string> {
+  const extension =
+    extensionByMimeType[file.mimetype] ||
+    path.extname(file.originalname).toLowerCase();
+
+  const filename = `${Date.now()}-${crypto.randomUUID()}${extension}`;
+
+  const { error } = await supabase.storage
+    .from(BUCKET_NAME)
+    .upload(filename, file.buffer, {
+      contentType: file.mimetype,
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (error) {
+    console.error("Supabase image upload error:", error);
+    throw new Error("Could not upload project image.");
+  }
+
+  const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(filename);
+
+  return data.publicUrl;
+}
+
+/* ============================================================
+   SUPABASE IMAGE DELETION
+   ============================================================ */
+
+async function deleteUploadedImage(imageUrl: string): Promise<void> {
+  if (!imageUrl) return;
+
+  try {
+    const parsedUrl = new URL(imageUrl);
+
+    const expectedOrigin = new URL(process.env.SUPABASE_URL || "").origin;
+
+    const storagePrefix = "/storage/v1/object/public/project-images/";
+
+    if (
+      parsedUrl.origin !== expectedOrigin ||
+      !parsedUrl.pathname.startsWith(storagePrefix)
+    ) {
+      return;
+    }
+
+    const objectPath = decodeURIComponent(
+      parsedUrl.pathname.slice(storagePrefix.length),
+    );
+
+    if (!objectPath || objectPath.includes("..")) {
+      return;
+    }
+
+    const { error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .remove([objectPath]);
+
+    if (error) {
+      console.error("Supabase image deletion error:", error);
+    }
+  } catch (error) {
+    console.error("Could not delete project image:", error);
+  }
+}
+
+/* ============================================================
+   ADMIN AUTHENTICATION
    ============================================================ */
 
 function requireAdmin(req: Request, res: Response, next: NextFunction): void {
@@ -199,7 +252,7 @@ function requireAdmin(req: Request, res: Response, next: NextFunction): void {
 
 /* ============================================================
    ADMIN KEY VERIFICATION
-   POST /admin/verify
+   POST /api/projects/admin/verify
    ============================================================ */
 
 router.post("/admin/verify", (req: Request, res: Response) => {
@@ -240,10 +293,30 @@ router.post("/admin/verify", (req: Request, res: Response) => {
    GET /api/projects
    ============================================================ */
 
-router.get("/", (_req: Request, res: Response) => {
-  const projects = readProjects();
+router.get("/", async (_req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  res.json(projects);
+    if (error) {
+      console.error("Get projects error:", error);
+
+      res.status(500).json({
+        error: "Could not retrieve projects.",
+      });
+      return;
+    }
+
+    res.json((data || []).map((row) => mapProject(row as DatabaseProject)));
+  } catch (error) {
+    console.error("Get projects error:", error);
+
+    res.status(500).json({
+      error: "Could not retrieve projects.",
+    });
+  }
 });
 
 /* ============================================================
@@ -251,19 +324,38 @@ router.get("/", (_req: Request, res: Response) => {
    GET /api/projects/:id
    ============================================================ */
 
-router.get("/:id", (req: Request, res: Response) => {
-  const projects = readProjects();
+router.get("/:id", async (req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("id", req.params.id)
+      .maybeSingle();
 
-  const project = projects.find((item) => item.id === req.params.id);
+    if (error) {
+      console.error("Get project error:", error);
 
-  if (!project) {
-    res.status(404).json({
-      error: "Project not found.",
+      res.status(500).json({
+        error: "Could not retrieve project.",
+      });
+      return;
+    }
+
+    if (!data) {
+      res.status(404).json({
+        error: "Project not found.",
+      });
+      return;
+    }
+
+    res.json(mapProject(data as DatabaseProject));
+  } catch (error) {
+    console.error("Get project error:", error);
+
+    res.status(500).json({
+      error: "Could not retrieve project.",
     });
-    return;
   }
-
-  res.json(project);
 });
 
 /* ============================================================
@@ -275,7 +367,9 @@ router.post(
   "/",
   requireAdmin,
   upload.single("image"),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
+    let uploadedImageUrl = "";
+
     try {
       const {
         title,
@@ -290,45 +384,57 @@ router.post(
       } = req.body;
 
       if (!title || !String(title).trim()) {
-        if (req.file) {
-          deleteUploadedImage(`/uploads/${req.file.filename}`);
-        }
-
         res.status(400).json({
           error: "Project title is required.",
         });
         return;
       }
 
-      const projects = readProjects();
+      if (req.file) {
+        uploadedImageUrl = await uploadProjectImage(req.file);
+      }
 
-      const newProject: ProjectRecord = {
-        id: randomUUID(),
+      const projectData = {
+        id: crypto.randomUUID(),
         title: getString(title),
         subtitle: getString(subtitle),
         category: getString(category),
-        image: req.file ? `/uploads/${req.file.filename}` : "",
+        image: uploadedImageUrl,
         problem: getString(problem),
         solution: getString(solution),
         tags: parseTags(req.body.tags),
-        liveUrl: getString(liveUrl),
-        sourceUrl: getString(sourceUrl),
-        footerLabel: getString(footerLabel),
-        hasLiveDemo: parseBoolean(hasLiveDemo),
-        createdAt: new Date().toISOString(),
+        live_url: getString(liveUrl),
+        source_url: getString(sourceUrl),
+        footer_label: getString(footerLabel),
+        has_live_demo: parseBoolean(hasLiveDemo),
       };
 
-      projects.unshift(newProject);
+      const { data, error } = await supabase
+        .from("projects")
+        .insert(projectData)
+        .select("*")
+        .single();
 
-      writeProjects(projects);
+      if (error) {
+        console.error("Create project database error:", error);
 
-      res.status(201).json(newProject);
-    } catch (error) {
-      if (req.file) {
-        deleteUploadedImage(`/uploads/${req.file.filename}`);
+        if (uploadedImageUrl) {
+          await deleteUploadedImage(uploadedImageUrl);
+        }
+
+        res.status(500).json({
+          error: "Could not create project.",
+        });
+        return;
       }
 
+      res.status(201).json(mapProject(data as DatabaseProject));
+    } catch (error) {
       console.error("Create project error:", error);
+
+      if (uploadedImageUrl) {
+        await deleteUploadedImage(uploadedImageUrl);
+      }
 
       res.status(500).json({
         error: "Could not create project.",
@@ -340,36 +446,39 @@ router.post(
 /* ============================================================
    UPDATE PROJECT
    PUT /api/projects/:id
-
-   - Supports editing project details.
-   - Keeps the existing image if no new image is uploaded.
-   - Replaces the image if a new image is uploaded.
    ============================================================ */
 
 router.put(
   "/:id",
   requireAdmin,
   upload.single("image"),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
+    let uploadedImageUrl = "";
+
     try {
-      const projects = readProjects();
+      const { data: existingData, error: findError } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", req.params.id)
+        .maybeSingle();
 
-      const projectIndex = projects.findIndex(
-        (item) => item.id === req.params.id,
-      );
+      if (findError) {
+        console.error("Find project error:", findError);
 
-      if (projectIndex === -1) {
-        if (req.file) {
-          deleteUploadedImage(`/uploads/${req.file.filename}`);
-        }
+        res.status(500).json({
+          error: "Could not retrieve project.",
+        });
+        return;
+      }
 
+      if (!existingData) {
         res.status(404).json({
           error: "Project not found.",
         });
         return;
       }
 
-      const existingProject = projects[projectIndex];
+      const existingProject = mapProject(existingData as DatabaseProject);
 
       const {
         title,
@@ -385,19 +494,17 @@ router.put(
       } = req.body;
 
       if (title !== undefined && !String(title).trim()) {
-        if (req.file) {
-          deleteUploadedImage(`/uploads/${req.file.filename}`);
-        }
-
         res.status(400).json({
           error: "Project title cannot be empty.",
         });
         return;
       }
 
-      const updatedProject: ProjectRecord = {
-        ...existingProject,
+      if (req.file) {
+        uploadedImageUrl = await uploadProjectImage(req.file);
+      }
 
+      const updatedData: Record<string, unknown> = {
         title: title !== undefined ? getString(title) : existingProject.title,
 
         subtitle:
@@ -420,46 +527,62 @@ router.put(
 
         tags: tags !== undefined ? parseTags(tags) : existingProject.tags,
 
-        liveUrl:
+        live_url:
           liveUrl !== undefined ? getString(liveUrl) : existingProject.liveUrl,
 
-        sourceUrl:
+        source_url:
           sourceUrl !== undefined
             ? getString(sourceUrl)
             : existingProject.sourceUrl,
 
-        footerLabel:
+        footer_label:
           footerLabel !== undefined
             ? getString(footerLabel)
             : existingProject.footerLabel,
 
-        hasLiveDemo:
+        has_live_demo:
           hasLiveDemo !== undefined
             ? parseBoolean(hasLiveDemo)
             : existingProject.hasLiveDemo,
 
-        image: req.file
-          ? `/uploads/${req.file.filename}`
-          : existingProject.image,
-
-        createdAt: existingProject.createdAt,
+        updated_at: new Date().toISOString(),
       };
 
-      projects[projectIndex] = updatedProject;
-
-      writeProjects(projects);
-
-      if (req.file && existingProject.image) {
-        deleteUploadedImage(existingProject.image);
+      if (uploadedImageUrl) {
+        updatedData.image = uploadedImageUrl;
       }
 
-      res.json(updatedProject);
+      const { data, error } = await supabase
+        .from("projects")
+        .update(updatedData)
+        .eq("id", req.params.id)
+        .select("*")
+        .single();
+
+      if (error) {
+        console.error("Update project error:", error);
+
+        if (uploadedImageUrl) {
+          await deleteUploadedImage(uploadedImageUrl);
+        }
+
+        res.status(500).json({
+          error: "Could not update project.",
+        });
+        return;
+      }
+
+      if (uploadedImageUrl && existingProject.image) {
+        await deleteUploadedImage(existingProject.image);
+      }
+
+      res.json(mapProject(data as DatabaseProject));
     } catch (error) {
-      if (req.file) {
-        deleteUploadedImage(`/uploads/${req.file.filename}`);
-      }
-
       console.error("Update project error:", error);
+
+      if (uploadedImageUrl) {
+        await deleteUploadedImage(uploadedImageUrl);
+      }
 
       res.status(500).json({
         error: "Could not update project.",
@@ -473,29 +596,48 @@ router.put(
    DELETE /api/projects/:id
    ============================================================ */
 
-router.delete("/:id", requireAdmin, (req: Request, res: Response) => {
+router.delete("/:id", requireAdmin, async (req: Request, res: Response) => {
   try {
-    const projects = readProjects();
+    const { data: existingData, error: findError } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("id", req.params.id)
+      .maybeSingle();
 
-    const projectIndex = projects.findIndex(
-      (item) => item.id === req.params.id,
-    );
+    if (findError) {
+      console.error("Find project error:", findError);
 
-    if (projectIndex === -1) {
+      res.status(500).json({
+        error: "Could not retrieve project.",
+      });
+      return;
+    }
+
+    if (!existingData) {
       res.status(404).json({
         error: "Project not found.",
       });
       return;
     }
 
-    const deletedProject = projects[projectIndex];
+    const deletedProject = mapProject(existingData as DatabaseProject);
 
-    projects.splice(projectIndex, 1);
+    const { error } = await supabase
+      .from("projects")
+      .delete()
+      .eq("id", req.params.id);
 
-    writeProjects(projects);
+    if (error) {
+      console.error("Delete project error:", error);
+
+      res.status(500).json({
+        error: "Could not delete project.",
+      });
+      return;
+    }
 
     if (deletedProject.image) {
-      deleteUploadedImage(deletedProject.image);
+      await deleteUploadedImage(deletedProject.image);
     }
 
     res.json({
