@@ -18,7 +18,6 @@ import ProjectManager from "../admin/ProjectManager";
 
 /* ============================================================
    PROJECT CARD MODEL
-   All projects now come from the backend.
    ============================================================ */
 
 type CardModel = {
@@ -56,20 +55,6 @@ function fromSaved(p: Project): CardModel {
 }
 
 /* ============================================================
-   ADMIN VISIBILITY
-   ============================================================ */
-
-function checkIsAdmin(): boolean {
-  if (typeof window === "undefined") return false;
-
-  const hasParam = new URLSearchParams(window.location.search).has("admin");
-
-  const hasKey = !!localStorage.getItem("adminKey");
-
-  return hasParam || hasKey;
-}
-
-/* ============================================================
    PROJECTS SECTION
    ============================================================ */
 
@@ -77,7 +62,6 @@ export default function Projects() {
   const [saved, setSaved] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showManager, setShowManager] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   const [lightbox, setLightbox] = useState<{
     src: string;
@@ -105,12 +89,10 @@ export default function Projects() {
 
   useEffect(() => {
     fetchSaved();
-    setIsAdmin(checkIsAdmin());
   }, [fetchSaved]);
 
   /* ------------------------------------------------------------
      MAP BACKEND PROJECTS
-     No hardcoded projects.
      ------------------------------------------------------------ */
 
   const cards: CardModel[] = saved.map(fromSaved);
@@ -172,23 +154,24 @@ export default function Projects() {
           </div>
         )}
 
-        {/* ADMIN-ONLY MANAGE BUTTON */}
+        {/* MANAGE PROJECTS BUTTON
+            Always visible on the public homepage.
+            Actual admin access is still verified by the backend.
+        */}
 
-        {isAdmin && (
-          <div className="mt-10 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setShowManager(true)}
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs font-medium text-slate-400 transition-colors hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-300"
-            >
-              <Settings2 className="h-3.5 w-3.5" />
-              Manage Projects
-              <span className="ml-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-slate-400">
-                {saved.length}
-              </span>
-            </button>
-          </div>
-        )}
+        <div className="mt-10 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setShowManager(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs font-medium text-slate-400 transition-colors hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-300"
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+            Manage Projects
+            <span className="ml-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-slate-400">
+              {saved.length}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* PROJECT MANAGER MODAL */}
@@ -229,7 +212,9 @@ function Lightbox({
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+      }
     };
 
     document.addEventListener("keydown", onKey);

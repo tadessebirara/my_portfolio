@@ -92,6 +92,7 @@ export async function getProjects(): Promise<Project[]> {
 // VERIFY ADMIN KEY
 // ============================================================
 
+
 export async function verifyAdminKey(adminKey: string): Promise<boolean> {
   const res = await fetch(`${API_URL}/projects/admin/verify`, {
     method: "POST",
@@ -100,8 +101,23 @@ export async function verifyAdminKey(adminKey: string): Promise<boolean> {
     },
   });
 
-  return res.ok;
+  let data: { error?: string; message?: string } = {};
+
+  try {
+    data = await res.json();
+  } catch {
+    // Response was not valid JSON.
+  }
+
+  if (!res.ok) {
+    throw new Error(
+      data.error || data.message || `Verification failed (${res.status}).`,
+    );
+  }
+
+  return true;
 }
+
 
 // ============================================================
 // CREATE PROJECT
