@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
@@ -60,7 +59,7 @@ export const SideScrollNav: React.FC = () => {
       }
 
       setActiveIndex((previous) =>
-        previous === currentIndex ? previous : currentIndex
+        previous === currentIndex ? previous : currentIndex,
       );
 
       ticking = false;
@@ -94,7 +93,7 @@ export const SideScrollNav: React.FC = () => {
         fixed
         right-3 sm:right-5 lg:right-7 xl:right-9
         top-1/2 -translate-y-1/2
-        z-[120]
+        z-120
         pointer-events-none
       "
     >
@@ -102,8 +101,8 @@ export const SideScrollNav: React.FC = () => {
         className="
           relative
           pointer-events-auto
-          w-[52px]
-          sm:w-[60px]
+          w-52px
+          sm:w-60px
           lg:w-[68px]
           xl:w-[74px]
           py-4
@@ -151,8 +150,8 @@ export const SideScrollNav: React.FC = () => {
             absolute top-4
             left-1/2
             -translate-x-1/2
-            w-[2px]
-            bg-gradient-to-b
+            w-0.5px
+            bg-linear-to-b
             from-cyan-300
             to-blue-500
             origin-top

@@ -1,11 +1,10 @@
-
 @import "tailwindcss";
 
 /* ============================================================
-   PROFESSIONAL PORTFOLIO
-   ULTRA-CLEAR VISUAL DESIGN SYSTEM
-   Deep Navy | Bright White | Electric Blue
-   ============================================================ */
+    PROFESSIONAL PORTFOLIO
+    ULTRA-CLEAR VISUAL DESIGN SYSTEM
+    Deep Navy | Bright White | Electric Blue
+    ============================================================ */
 
 :root {
   color-scheme: dark;
@@ -91,7 +90,7 @@ body {
 }
 
 /* ============================================================
-   2. TYPOGRAPHY
+    2. TYPOGRAPHY
    ============================================================ */
 
 h1,
@@ -185,7 +184,7 @@ body {
 [class*="bg-white/[0.03]"],
 [class*="bg-white/[0.04]"],
 [class*="bg-white/[0.05]"] {
-  background-color: rgba(255, 255, 255, 0.10) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* ============================================================
@@ -382,7 +381,7 @@ iframe {
 }
 
 /* ============================================================
-   16. FOCUS ACCESSIBILITY
+    16. FOCUS ACCESSIBILITY
    ============================================================ */
 
 a:focus-visible,

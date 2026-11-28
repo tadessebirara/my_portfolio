@@ -26,6 +26,7 @@ export default function App() {
         <Services />
         <Skills />
         <Projects />
+        
         <Process />
         <WhyMe />
         <Contact />

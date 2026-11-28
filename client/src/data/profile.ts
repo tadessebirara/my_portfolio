@@ -14,11 +14,11 @@ export const profile: Profile = {
   name: "Tadesse",
   role: "Software Engineer & Digital Solutions Developer",
   /* EDIT: Replace with your actual email */
-  email: "your.email@example.com",
+  email: "tadessebirara7@gmail.com",
   /* EDIT: Replace with your actual phone */
-  phone: "+251 XXX XXX XXX",
+  phone: "+251 905653221",
   /* EDIT: Replace with your actual WhatsApp number */
-  whatsapp: "251XXXXXXXXX",
+  whatsapp: "251905653221",
   /* EDIT: Replace with your actual LinkedIn URL */
   linkedin: "https://linkedin.com/",
   /* EDIT: Replace with your actual GitHub URL */

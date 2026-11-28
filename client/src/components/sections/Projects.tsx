@@ -163,7 +163,7 @@ export default function Projects() {
           <button
             type="button"
             onClick={() => setShowManager(true)}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs font-medium text-slate-400 transition-colors hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-300"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/0.03 px-4 py-2 text-xs font-medium text-slate-400 transition-colors hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-300"
           >
             <Settings2 className="h-3.5 w-3.5" />
             Manage Projects
@@ -234,7 +234,7 @@ function Lightbox({
       aria-modal="true"
       aria-label={alt}
       onClick={onClose}
-      className="fixed inset-0 z-[120] flex cursor-zoom-out items-center justify-center bg-black/85 p-4 backdrop-blur-sm sm:p-8"
+      className="fixed inset-0 z-120 flex cursor-zoom-out items-center justify-center bg-black/85 p-4 backdrop-blur-sm sm:p-8"
     >
       <button
         type="button"
@@ -277,7 +277,7 @@ function ProjectCard({
       <div className="grid lg:grid-cols-12">
         {/* LEFT VISUAL */}
 
-        <div className="relative flex min-h-[320px] flex-col items-center justify-center overflow-hidden border-b border-white/10 bg-[#05080f] p-6 lg:col-span-5 lg:border-b-0 lg:border-r">
+        <div className="relative flex min-h-320px flex-col items-center justify-center overflow-hidden border-b border-white/10 bg-[#05080f] p-6 lg:col-span-5 lg:border-b-0 lg:border-r">
           <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/10 blur-[80px] transition-all duration-500 group-hover:bg-blue-500/20" />
 
           {/* CATEGORY BADGE */}
@@ -300,7 +300,7 @@ function ProjectCard({
                 alt={`${card.title} screenshot`}
                 loading="lazy"
                 decoding="async"
-                className="block h-auto max-h-[420px] w-full object-contain"
+                className="block h-auto max-h-420px w-full object-contain"
               />
 
               <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/60 px-3 py-1.5 text-xs font-medium text-white opacity-0 backdrop-blur-md transition-opacity duration-300 group-hover/img:opacity-100">
@@ -309,7 +309,7 @@ function ProjectCard({
               </span>
             </button>
           ) : (
-            <div className="relative z-10 flex h-28 w-28 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.02] text-4xl font-bold text-white shadow-2xl backdrop-blur-xl transition-transform duration-500 group-hover:scale-110">
+            <div className="relative z-10 flex h-28 w-28 items-center justify-center rounded-2xl border border-white/10 bg-white/0.02 text-4xl font-bold text-white shadow-2xl backdrop-blur-xl transition-transform duration-500 group-hover:scale-110">
               {card.title?.[0] || "P"}
             </div>
           )}
@@ -341,7 +341,7 @@ function ProjectCard({
           {/* PROBLEM AND SOLUTION */}
 
           <div className="mb-8 grid gap-6 md:grid-cols-2">
-            <div className="rounded-xl border border-white/5 bg-white/[0.02] p-5">
+            <div className="rounded-xl border border-white/5 bg-white/0.02 p-5">
               <div className="mb-2 flex items-center gap-2 text-rose-400">
                 <Target size={16} />
 
@@ -355,7 +355,7 @@ function ProjectCard({
               </p>
             </div>
 
-            <div className="rounded-xl border border-white/5 bg-white/[0.02] p-5">
+            <div className="rounded-xl border border-white/5 bg-white/0.02 p-5">
               <div className="mb-2 flex items-center gap-2 text-emerald-400">
                 <Lightbulb size={16} />
 
@@ -415,7 +415,7 @@ function ProjectCard({
                 href={card.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.02] px-6 py-3 text-sm font-medium text-white transition-all hover:border-white/30 hover:bg-white/[0.06]"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/0.02 px-6 py-3 text-sm font-medium text-white transition-all hover:border-white/30 hover:bg-white/0.06"
               >
                 <Github size={18} />
                 Source Code
@@ -424,7 +424,7 @@ function ProjectCard({
               <button
                 type="button"
                 disabled
-                className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-6 py-3 text-sm font-medium text-slate-400 opacity-70"
+                className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-white/10 bg-white/0.02 px-6 py-3 text-sm font-medium text-slate-400 opacity-70"
                 title="Repository coming soon"
               >
                 <Github size={18} />
