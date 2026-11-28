@@ -5,7 +5,7 @@ import SectionHeading from "../ui/SectionHeading";
 
 // 1. Put your image in the `public/` directory (e.g. public/profile.jpg)
 // 2. Change this string to "/profile.jpg" when ready.
-const profileImage = "/profile.jpg";
+const profileImage = "/myimage.png";
 
 const points = [
   {
@@ -37,7 +37,7 @@ export function About() {
       {/* Background Lighting */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-0 top-1/3 h-96 w-96 -translate-x-1/2 rounded-full bg-blue-500/[0.04] blur-[120px]"
+        className="pointer-events-none absolute left-0 top-1/3 h-96 w-96 -translate-x-1/2 rounded-full bg-blue-500/0.04 blur-[120px]"
       />
 
       <div className="relative mx-auto max-w-6xl px-6">
